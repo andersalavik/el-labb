@@ -1,0 +1,99 @@
+{
+  "id": "4d90dfa1-19a2-4309-a27e-8bdd00743e36",
+  "name": "Test 2",
+  "snapshot": {
+    "components": [
+      {
+        "id": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+        "props": {
+          "threshold": 12,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 480,
+        "y": 400
+      },
+      {
+        "id": "b356313f-ee98-404c-8223-b143df848219",
+        "props": {},
+        "rotation": 0,
+        "type": "ground",
+        "variant": "ground",
+        "x": 100,
+        "y": 220
+      },
+      {
+        "id": "16e47fa6-1add-4066-9d1d-c625c6b1c873",
+        "props": {
+          "value": 12
+        },
+        "rotation": 0,
+        "type": "voltage_source",
+        "variant": "voltage_source",
+        "x": 380,
+        "y": 100
+      },
+      {
+        "id": "bb3737f8-7cc7-426e-831c-496ac989f811",
+        "props": {
+          "closed": true
+        },
+        "rotation": 0,
+        "type": "switch",
+        "variant": "switch",
+        "x": 660,
+        "y": 220
+      }
+    ],
+    "wires": [
+      {
+        "from": {
+          "compId": "b356313f-ee98-404c-8223-b143df848219",
+          "index": 0
+        },
+        "id": "88537e28-30af-4730-8c74-b1e3f3785d29",
+        "to": {
+          "compId": "16e47fa6-1add-4066-9d1d-c625c6b1c873",
+          "index": 0
+        }
+      },
+      {
+        "from": {
+          "compId": "16e47fa6-1add-4066-9d1d-c625c6b1c873",
+          "index": 0
+        },
+        "id": "27e40acd-414e-4c4a-b0ff-8805aee4bb2f",
+        "to": {
+          "compId": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+          "index": 0
+        }
+      },
+      {
+        "from": {
+          "compId": "16e47fa6-1add-4066-9d1d-c625c6b1c873",
+          "index": 1
+        },
+        "id": "a3a1a718-090a-4ce6-8f9c-4d917cecdb51",
+        "to": {
+          "compId": "bb3737f8-7cc7-426e-831c-496ac989f811",
+          "index": 0
+        }
+      },
+      {
+        "from": {
+          "compId": "bb3737f8-7cc7-426e-831c-496ac989f811",
+          "index": 1
+        },
+        "id": "ed3ffe93-cac8-42b6-b36c-faa700afd92d",
+        "to": {
+          "compId": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+          "index": 1
+        }
+      }
+    ]
+  },
+  "updatedAt": 1768513079318,
+  "createdAt": 1768513079318
+}

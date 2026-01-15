@@ -1,0 +1,552 @@
+{
+  "id": "c12f9523-c446-4713-904b-bbae4c680c7a",
+  "name": "Test 1",
+  "snapshot": {
+    "components": [
+      {
+        "id": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+        "props": {
+          "litColor": "#77bb41",
+          "name": "Test",
+          "ratedVoltage": 12,
+          "threshold": 12,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 480,
+        "y": 400
+      },
+      {
+        "id": "b356313f-ee98-404c-8223-b143df848219",
+        "props": {
+          "name": ""
+        },
+        "rotation": 0,
+        "type": "ground",
+        "variant": "ground",
+        "x": 100,
+        "y": 220
+      },
+      {
+        "id": "16e47fa6-1add-4066-9d1d-c625c6b1c873",
+        "props": {
+          "connection": "Y",
+          "frequency": 50,
+          "name": "",
+          "supplyType": "DC",
+          "value": 12
+        },
+        "rotation": 0,
+        "type": "voltage_source",
+        "variant": "voltage_source",
+        "x": 380,
+        "y": 100
+      },
+      {
+        "id": "77aad18b-94b0-4d27-b01f-82b228859e79",
+        "props": {
+          "connection": "Y",
+          "frequency": 50,
+          "name": "",
+          "neutral": true,
+          "supplyType": "AC3",
+          "value": 400
+        },
+        "rotation": 0,
+        "type": "voltage_source",
+        "variant": "voltage_source",
+        "x": 500,
+        "y": 720
+      },
+      {
+        "id": "7802b257-61c1-40e6-8279-ab902083e118",
+        "props": {
+          "connection": "Y",
+          "name": "",
+          "startVoltage": 200,
+          "value": 230
+        },
+        "rotation": 0,
+        "type": "motor_3ph",
+        "variant": "motor_3ph",
+        "x": 940,
+        "y": 360
+      },
+      {
+        "id": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+        "props": {
+          "coilRatedVoltage": 12,
+          "coilResistance": 120,
+          "contactType": "changeover",
+          "name": "",
+          "poles": [
+            "NO",
+            "NO",
+            "NO"
+          ],
+          "pullInVoltage": 9
+        },
+        "rotation": 0,
+        "type": "contactor",
+        "variant": "contactor_changeover",
+        "x": 760,
+        "y": 580
+      },
+      {
+        "id": "1dd9b7a2-923b-4199-8473-b82fc81dca8b",
+        "type": "switch_spdt",
+        "variant": "switch_spdt",
+        "x": 920,
+        "y": 80,
+        "rotation": 0,
+        "props": {
+          "position": "up"
+        }
+      },
+      {
+        "id": "18c594f4-1efb-46d0-b8d0-054cf840fb54",
+        "type": "switch_spdt",
+        "variant": "switch_spdt",
+        "x": 920,
+        "y": 180,
+        "rotation": 0,
+        "props": {
+          "position": "down"
+        }
+      }
+    ],
+    "wires": [
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "b356313f-ee98-404c-8223-b143df848219",
+          "index": 0
+        },
+        "id": "88537e28-30af-4730-8c74-b1e3f3785d29",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "16e47fa6-1add-4066-9d1d-c625c6b1c873",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "16e47fa6-1add-4066-9d1d-c625c6b1c873",
+          "index": 0
+        },
+        "id": "27e40acd-414e-4c4a-b0ff-8805aee4bb2f",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "77aad18b-94b0-4d27-b01f-82b228859e79",
+          "index": 3
+        },
+        "id": "289ea0c3-2bd7-45f0-bad7-1a1e6bea9506",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 120,
+            "y": 700
+          }
+        ],
+        "to": {
+          "compId": "b356313f-ee98-404c-8223-b143df848219",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+          "index": 1
+        },
+        "id": "f03e2dc9-2957-4876-bf4f-823da6ba9cef",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 580,
+            "y": 560
+          }
+        ],
+        "to": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 1
+        },
+        "id": "e8e099be-b7ca-4818-9afd-2882bff36c44",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 580,
+            "y": 600
+          }
+        ],
+        "to": {
+          "compId": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "77aad18b-94b0-4d27-b01f-82b228859e79",
+          "index": 0
+        },
+        "id": "bb04b2e0-b7c5-42ea-a37d-1809c6762e5b",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 680,
+            "y": 660
+          }
+        ],
+        "to": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 2
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 5
+        },
+        "id": "0317f137-8b10-4dc2-8757-64ee72ab563a",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 680,
+            "y": 680
+          }
+        ],
+        "to": {
+          "compId": "77aad18b-94b0-4d27-b01f-82b228859e79",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "77aad18b-94b0-4d27-b01f-82b228859e79",
+          "index": 2
+        },
+        "id": "0199b94f-3c51-4401-ac6a-3fb2b0f37506",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 680,
+            "y": 700
+          }
+        ],
+        "to": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 8
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 4
+        },
+        "id": "4504592f-cf7d-412b-9403-5689a567be59",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 860,
+            "y": 540
+          }
+        ],
+        "to": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 7
+        },
+        "id": "26a03e94-2fd5-44c5-8bc0-35a4f5433548",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 980,
+            "y": 580
+          }
+        ],
+        "to": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 10
+        },
+        "id": "66d8aba1-a627-4d42-8db8-dbd213ae314b",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 900,
+            "y": 620
+          }
+        ],
+        "to": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 2
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 3
+        },
+        "id": "18d46b4e-8ad1-4b8b-887e-c026eb8ee91b",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 6
+        },
+        "id": "80f50113-9358-418d-b37e-d4bc6f26a036",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 880,
+            "y": 560
+          }
+        ],
+        "to": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 2
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "54f5c8e2-81b1-474f-9ac6-0ff15028f5e7",
+          "index": 9
+        },
+        "id": "255ef939-56bc-4de1-b2a1-f3f0e1aeebeb",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 1000,
+            "y": 600
+          }
+        ],
+        "to": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 1
+        }
+      },
+      {
+        "id": "97f62fad-1553-4d1c-a9dc-123860236928",
+        "from": {
+          "compId": "1dd9b7a2-923b-4199-8473-b82fc81dca8b",
+          "index": 1
+        },
+        "to": {
+          "compId": "18c594f4-1efb-46d0-b8d0-054cf840fb54",
+          "index": 1
+        },
+        "points": [
+          {
+            "x": 1040,
+            "y": 60
+          },
+          {
+            "x": 1040,
+            "y": 160
+          }
+        ],
+        "color": "#2f2f34",
+        "area": 1.5,
+        "length": 1,
+        "material": "copper"
+      },
+      {
+        "id": "759753ca-55cf-4be8-94d7-2490c44a7c9e",
+        "from": {
+          "compId": "18c594f4-1efb-46d0-b8d0-054cf840fb54",
+          "index": 2
+        },
+        "to": {
+          "compId": "1dd9b7a2-923b-4199-8473-b82fc81dca8b",
+          "index": 2
+        },
+        "points": [
+          {
+            "x": 1020,
+            "y": 180
+          },
+          {
+            "x": 1020,
+            "y": 80
+          }
+        ],
+        "color": "#2f2f34",
+        "area": 1.5,
+        "length": 1,
+        "material": "copper"
+      },
+      {
+        "id": "8a870b29-4b1f-4aa3-8dbe-92e96b69391d",
+        "from": {
+          "compId": "1dd9b7a2-923b-4199-8473-b82fc81dca8b",
+          "index": 0
+        },
+        "to": {
+          "compId": "16e47fa6-1add-4066-9d1d-c625c6b1c873",
+          "index": 1
+        },
+        "points": [],
+        "color": "#2f2f34",
+        "area": 1.5,
+        "length": 1,
+        "material": "copper"
+      },
+      {
+        "id": "89733e2a-4714-4432-bc47-39402ec2fd24",
+        "from": {
+          "compId": "18c594f4-1efb-46d0-b8d0-054cf840fb54",
+          "index": 0
+        },
+        "to": {
+          "compId": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+          "index": 1
+        },
+        "points": [],
+        "color": "#2f2f34",
+        "area": 1.5,
+        "length": 1,
+        "material": "copper"
+      }
+    ],
+    "meters": [
+      {
+        "id": "d02642cb-a527-44e5-97ef-67a71f763717",
+        "mode": "voltage",
+        "componentId": null,
+        "aRef": {
+          "compId": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+          "index": 0
+        },
+        "bRef": {
+          "compId": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+          "index": 1
+        },
+        "x": 490,
+        "y": 264,
+        "unit": "V"
+      },
+      {
+        "id": "0f42473c-cb76-4a85-9ffe-5d16a028dacc",
+        "mode": "ac_voltage",
+        "componentId": null,
+        "aRef": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 0
+        },
+        "bRef": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 2
+        },
+        "x": 817,
+        "y": 254,
+        "unit": "V"
+      },
+      {
+        "id": "932e54a1-22e3-453b-81d7-591dfc3781d0",
+        "mode": "ac_voltage",
+        "componentId": null,
+        "aRef": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 1
+        },
+        "bRef": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 2
+        },
+        "x": 1013,
+        "y": 222,
+        "unit": "V"
+      },
+      {
+        "id": "7f98cd9a-caa7-46d5-ada9-9b6c6211f0b4",
+        "mode": "ac_voltage",
+        "componentId": null,
+        "aRef": {
+          "compId": "77aad18b-94b0-4d27-b01f-82b228859e79",
+          "index": 3
+        },
+        "bRef": {
+          "compId": "77aad18b-94b0-4d27-b01f-82b228859e79",
+          "index": 0
+        },
+        "x": 482,
+        "y": 557,
+        "unit": "V"
+      }
+    ]
+  },
+  "updatedAt": 1768518634597,
+  "createdAt": 1768512792518
+}
