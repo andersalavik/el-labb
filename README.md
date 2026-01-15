@@ -21,6 +21,14 @@ Ett webbaserat verktyg för att rita och simulera AC/DC‑scheman med symbolbibl
 
 ## Starta lokalt
 
+Installera beroenden:
+
+```bash
+pip install -r requirements.txt
+```
+
+Starta servern:
+
 ```bash
 python app.py
 ```
@@ -55,5 +63,6 @@ http://127.0.0.1:5000
 
 ## Notiser
 
+- Projektet är i ett väldigt tidigt stadie och är vibe‑kodat.
 - Simuleringen är avsedd för utbildning och visualisering, inte för verkliga elsystem.
 - AC‑simulering stöder en frekvens åt gången.
