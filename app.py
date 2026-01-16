@@ -1203,6 +1203,11 @@ def simulate_circuit(payload):
         "solution": {
             "nodeVoltages": dc_solution["node_voltages"] if dc_solution else [],
             "terminalNodes": terminal_nodes,
+            "acNodeVoltages": (
+                [{"re": v.re, "im": v.im} for v in ac_solution["node_voltages"]]
+                if ac_solution
+                else []
+            ),
         },
         "contactorStates": result["contactor_states"],
         "lampLit": lamp_lit,
@@ -1546,4 +1551,4 @@ def api_saves_delete(save_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True,port=8080)

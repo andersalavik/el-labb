@@ -4,89 +4,111 @@
   "snapshot": {
     "components": [
       {
-        "id": "e809508f-e8d0-41d7-9109-cdc087c2fac3",
-        "props": {
-          "litColor": "#ff2600",
-          "name": "",
-          "ratedVoltage": 12,
-          "threshold": 6,
-          "value": 80
-        },
-        "rotation": 0,
-        "type": "lamp",
-        "variant": "lamp",
-        "x": 940,
-        "y": 140
-      },
-      {
-        "id": "72dc5cf5-3979-4ba9-8be8-9d1be03f6fb2",
-        "props": {
-          "litColor": "#fffb00",
-          "name": "",
-          "ratedVoltage": 12,
-          "threshold": 6,
-          "value": 80
-        },
-        "rotation": 0,
-        "type": "lamp",
-        "variant": "lamp",
-        "x": 940,
-        "y": 200
-      },
-      {
-        "id": "2c69361c-7e2c-4124-af42-6266d8c13c72",
-        "props": {
-          "litColor": "#00f900",
-          "name": "",
-          "ratedVoltage": 12,
-          "threshold": 6,
-          "value": 80
-        },
-        "rotation": 0,
-        "type": "lamp",
-        "variant": "lamp",
-        "x": 940,
-        "y": 260
-      },
-      {
-        "id": "45bed1d8-fe77-4858-8672-87016b26f71e",
+        "id": "cf2610cd-88df-4c34-8214-f640916e51e7",
         "props": {
           "connection": "Y",
           "frequency": 50,
           "name": "",
           "neutral": true,
           "supplyType": "DC",
-          "value": 12
+          "value": 9
         },
         "rotation": 0,
         "type": "voltage_source",
         "variant": "voltage_source",
-        "x": 180,
-        "y": 40
+        "x": 60,
+        "y": 280
       },
       {
-        "id": "fcfd49ab-e297-4ff4-816c-f090c169d511",
+        "id": "970582c4-6278-4b37-ab37-3d3b74bc7385",
+        "props": {
+          "litColor": "#ff2600",
+          "name": "",
+          "ratedVoltage": 9,
+          "threshold": 6,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 1180,
+        "y": 80
+      },
+      {
+        "id": "40520ca8-175f-499c-ba19-6d11480f52d0",
+        "props": {
+          "litColor": "#fffb00",
+          "name": "",
+          "ratedVoltage": 9,
+          "threshold": 6,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 1180,
+        "y": 240
+      },
+      {
+        "id": "19c0ec48-0d37-461a-8bab-770b4b3a6718",
+        "props": {
+          "litColor": "#00f900",
+          "name": "",
+          "ratedVoltage": 9,
+          "threshold": 6,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 1180,
+        "y": 400
+      },
+      {
+        "id": "81d92649-27df-480f-aac4-495319907e4a",
         "props": {
           "name": ""
         },
         "rotation": 0,
         "type": "node",
         "variant": "node",
-        "x": 1160,
-        "y": 200
+        "x": 1420,
+        "y": 240
       },
       {
-        "id": "f83cb488-f20f-4bde-9035-194024b295c3",
+        "id": "eaf7a07d-4ad8-4275-8e59-ac7b7084d40a",
         "props": {
           "coilResistance": 120,
-          "delayMs": 3000,
+          "delayMs": 10000,
+          "initialClosed": false,
+          "loop": true,
+          "name": "",
+          "pullInVoltage": 9,
+          "timerState": {
+            "outputClosed": true,
+            "remainingMs": 8449,
+            "running": true,
+            "startAt": 1768549409781
+          }
+        },
+        "rotation": 0,
+        "type": "timer",
+        "variant": "timer",
+        "x": 280,
+        "y": 300
+      },
+      {
+        "id": "2b0245cb-9bb4-4d19-bf48-4b177b2995a7",
+        "props": {
+          "coilResistance": 120,
+          "delayMs": 1500,
           "initialClosed": false,
           "loop": false,
           "name": "",
-          "pullInVoltage": 12,
+          "pullInVoltage": 9,
           "timerState": {
             "outputClosed": false,
-            "remainingMs": 3000,
+            "remainingMs": 1500,
             "running": false,
             "startAt": null
           }
@@ -94,83 +116,128 @@
         "rotation": 0,
         "type": "timer",
         "variant": "timer",
-        "x": 580,
-        "y": 380
+        "x": 640,
+        "y": 420
       },
       {
-        "id": "0d8ac7e9-f5e4-4cce-ad61-f871218b0e0f",
+        "id": "b4bd6b3b-643d-4b66-8525-93da6ae806d2",
         "props": {
+          "coilRatedVoltage": 9,
+          "coilResistance": 120,
+          "contactType": "standard",
           "name": "",
-          "position": "up"
+          "poles": [
+            "NO"
+          ],
+          "pullInVoltage": 9
         },
         "rotation": 0,
-        "type": "switch_spdt",
-        "variant": "switch_spdt",
-        "x": 320,
-        "y": 160
+        "type": "contactor",
+        "variant": "contactor_standard",
+        "x": 960,
+        "y": 400
       },
       {
-        "id": "ff05a201-d5a8-429f-8c9e-6111581948fd",
-        "type": "timer",
-        "variant": "timer",
-        "x": 620,
-        "y": 140,
-        "rotation": 0,
+        "id": "c28ba4b7-d992-48bb-8562-0a9c1787b635",
         "props": {
-          "delayMs": 1500,
-          "pullInVoltage": 12,
+          "coilRatedVoltage": 9,
           "coilResistance": 120,
-          "loop": false,
+          "contactType": "standard",
+          "name": "",
+          "poles": [
+            "NO"
+          ],
+          "pullInVoltage": 9
+        },
+        "rotation": 0,
+        "type": "contactor",
+        "variant": "contactor_standard",
+        "x": 960,
+        "y": 240
+      },
+      {
+        "id": "ca8e859e-fd04-4796-93e3-255a5712843c",
+        "props": {
+          "coilRatedVoltage": 9,
+          "coilResistance": 120,
+          "contactType": "standard",
+          "name": "",
+          "poles": [
+            "NO"
+          ],
+          "pullInVoltage": 9
+        },
+        "rotation": 0,
+        "type": "contactor",
+        "variant": "contactor_standard",
+        "x": 960,
+        "y": 80
+      },
+      {
+        "id": "f6833d3c-1810-4cdc-9f87-0861ad5a777a",
+        "props": {
+          "coilResistance": 120,
+          "delayMs": 1500,
           "initialClosed": false,
+          "loop": false,
+          "name": "",
+          "pullInVoltage": 9,
           "timerState": {
             "outputClosed": true,
             "remainingMs": 0,
             "running": false,
-            "startAt": 1768523831238
+            "startAt": 1768549409781
           }
-        }
-      },
-      {
-        "id": "2c4780cb-8b7f-4352-adcc-35084ae0f380",
-        "type": "timer",
-        "variant": "timer",
-        "x": 620,
-        "y": 240,
+        },
         "rotation": 0,
-        "props": {
-          "delayMs": 1500,
-          "pullInVoltage": 12,
-          "coilResistance": 120,
-          "loop": false,
-          "initialClosed": false,
-          "timerState": {
-            "outputClosed": true,
-            "remainingMs": 0,
-            "running": false,
-            "startAt": 1768523831238
-          }
-        }
-      },
-      {
-        "id": "e98b2373-77c5-4b09-8119-dec0880c54ab",
         "type": "timer",
         "variant": "timer",
         "x": 600,
-        "y": 40,
-        "rotation": 0,
+        "y": 260
+      },
+      {
+        "id": "b03dba2b-ed7f-4a29-b90c-ffa1554f6ba4",
         "props": {
-          "delayMs": 1500,
-          "pullInVoltage": 9,
           "coilResistance": 120,
-          "loop": false,
+          "delayMs": 1500,
           "initialClosed": false,
+          "loop": false,
+          "name": "",
+          "pullInVoltage": 9,
           "timerState": {
-            "outputClosed": true,
-            "remainingMs": 0,
+            "outputClosed": false,
+            "remainingMs": 1500,
             "running": false,
-            "startAt": 1768523831238
+            "startAt": null
           }
-        }
+        },
+        "rotation": 0,
+        "type": "timer",
+        "variant": "timer",
+        "x": 800,
+        "y": 500
+      },
+      {
+        "id": "a751133c-2f61-4a95-b479-2197aa9d65b4",
+        "props": {
+          "coilResistance": 120,
+          "delayMs": 1500,
+          "initialClosed": false,
+          "loop": false,
+          "name": "",
+          "pullInVoltage": 9,
+          "timerState": {
+            "outputClosed": false,
+            "remainingMs": 1500,
+            "running": false,
+            "startAt": null
+          }
+        },
+        "rotation": 0,
+        "type": "timer",
+        "variant": "timer",
+        "x": 780,
+        "y": 580
       }
     ],
     "wires": [
@@ -178,31 +245,31 @@
         "area": 1.5,
         "color": "#2f2f34",
         "from": {
-          "compId": "fcfd49ab-e297-4ff4-816c-f090c169d511",
-          "index": 0
+          "compId": "970582c4-6278-4b37-ab37-3d3b74bc7385",
+          "index": 1
         },
-        "id": "19d0e395-b2dc-43d6-b411-0ed5139a1190",
+        "id": "53e60bdb-0615-412b-a474-0daf7434eb5c",
         "length": 1,
         "material": "copper",
         "points": [],
         "to": {
-          "compId": "e809508f-e8d0-41d7-9109-cdc087c2fac3",
-          "index": 1
+          "compId": "81d92649-27df-480f-aac4-495319907e4a",
+          "index": 2
         }
       },
       {
         "area": 1.5,
         "color": "#2f2f34",
         "from": {
-          "compId": "fcfd49ab-e297-4ff4-816c-f090c169d511",
+          "compId": "81d92649-27df-480f-aac4-495319907e4a",
           "index": 2
         },
-        "id": "219dca66-f619-48d2-be6a-92507228bdcf",
+        "id": "cd76af19-216b-4db0-baae-e54199a5159c",
         "length": 1,
         "material": "copper",
         "points": [],
         "to": {
-          "compId": "72dc5cf5-3979-4ba9-8be8-9d1be03f6fb2",
+          "compId": "40520ca8-175f-499c-ba19-6d11480f52d0",
           "index": 1
         }
       },
@@ -210,49 +277,77 @@
         "area": 1.5,
         "color": "#2f2f34",
         "from": {
-          "compId": "fcfd49ab-e297-4ff4-816c-f090c169d511",
-          "index": 1
+          "compId": "81d92649-27df-480f-aac4-495319907e4a",
+          "index": 2
         },
-        "id": "f39ff7e4-87ad-48de-9e39-63fc6d69601b",
+        "id": "725e4543-d8b2-457b-a970-1c8b2c8410fa",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "19c0ec48-0d37-461a-8bab-770b4b3a6718",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "81d92649-27df-480f-aac4-495319907e4a",
+          "index": 2
+        },
+        "id": "cf3ff170-f19c-4371-984d-bf5f03413f53",
         "length": 1,
         "material": "copper",
         "points": [
           {
-            "x": 1160,
-            "y": 220
+            "x": 1380,
+            "y": 20
+          },
+          {
+            "x": 40,
+            "y": 20
           }
         ],
         "to": {
-          "compId": "2c69361c-7e2c-4124-af42-6266d8c13c72",
-          "index": 1
+          "compId": "cf2610cd-88df-4c34-8214-f640916e51e7",
+          "index": 0
         }
       },
       {
         "area": 1.5,
         "color": "#2f2f34",
         "from": {
-          "compId": "fcfd49ab-e297-4ff4-816c-f090c169d511",
-          "index": 3
+          "compId": "cf2610cd-88df-4c34-8214-f640916e51e7",
+          "index": 1
         },
-        "id": "144f353d-76e3-4a70-994a-555e999de0ed",
+        "id": "9c3484b3-1cfd-4e7b-b4d8-cc73d40ea286",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "eaf7a07d-4ad8-4275-8e59-ac7b7084d40a",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "eaf7a07d-4ad8-4275-8e59-ac7b7084d40a",
+          "index": 1
+        },
+        "id": "9550bd12-5998-4b16-9824-13557963960e",
         "length": 1,
         "material": "copper",
         "points": [
-          {
-            "x": 1200,
-            "y": 520
-          },
-          {
-            "x": 100,
-            "y": 520
-          },
           {
             "x": 80,
-            "y": 40
+            "y": 400
           }
         ],
         "to": {
-          "compId": "45bed1d8-fe77-4858-8672-87016b26f71e",
+          "compId": "cf2610cd-88df-4c34-8214-f640916e51e7",
           "index": 0
         }
       },
@@ -260,395 +355,541 @@
         "area": 1.5,
         "color": "#2f2f34",
         "from": {
-          "compId": "fcfd49ab-e297-4ff4-816c-f090c169d511",
-          "index": 2
-        },
-        "id": "351bc6d6-b92a-46fd-8e6e-798e3becb4a3",
-        "length": 1,
-        "material": "copper",
-        "points": [],
-        "to": {
-          "compId": "fcfd49ab-e297-4ff4-816c-f090c169d511",
-          "index": 0
-        }
-      },
-      {
-        "area": 1.5,
-        "color": "#2f2f34",
-        "from": {
-          "compId": "fcfd49ab-e297-4ff4-816c-f090c169d511",
-          "index": 2
-        },
-        "id": "18d42cf1-940a-4bec-8984-d2e22698f681",
-        "length": 1,
-        "material": "copper",
-        "points": [],
-        "to": {
-          "compId": "fcfd49ab-e297-4ff4-816c-f090c169d511",
-          "index": 1
-        }
-      },
-      {
-        "area": 1.5,
-        "color": "#2f2f34",
-        "from": {
-          "compId": "fcfd49ab-e297-4ff4-816c-f090c169d511",
-          "index": 1
-        },
-        "id": "a1c01169-281f-4bb1-bc15-b81fcbcb8a05",
-        "length": 1,
-        "material": "copper",
-        "points": [],
-        "to": {
-          "compId": "fcfd49ab-e297-4ff4-816c-f090c169d511",
-          "index": 3
-        }
-      },
-      {
-        "area": 1.5,
-        "color": "#2f2f34",
-        "from": {
-          "compId": "f83cb488-f20f-4bde-9035-194024b295c3",
-          "index": 3
-        },
-        "id": "04fe153f-b69d-4764-88c3-848416a016be",
-        "length": 1,
-        "material": "copper",
-        "points": [],
-        "to": {
-          "compId": "2c69361c-7e2c-4124-af42-6266d8c13c72",
-          "index": 0
-        }
-      },
-      {
-        "area": 1.5,
-        "color": "#2f2f34",
-        "from": {
-          "compId": "f83cb488-f20f-4bde-9035-194024b295c3",
+          "compId": "2b0245cb-9bb4-4d19-bf48-4b177b2995a7",
           "index": 0
         },
-        "id": "17da3121-74d4-4436-b8f1-1d70ae811c70",
-        "length": 1,
-        "material": "copper",
-        "points": [],
-        "to": {
-          "compId": "0d8ac7e9-f5e4-4cce-ad61-f871218b0e0f",
-          "index": 2
-        }
-      },
-      {
-        "area": 1.5,
-        "color": "#2f2f34",
-        "from": {
-          "compId": "f83cb488-f20f-4bde-9035-194024b295c3",
-          "index": 1
-        },
-        "id": "65f5e993-bdbe-4ee9-9b71-b862e4f72ab6",
+        "id": "59d85ea8-d22d-418f-bc1a-5e802423c1e7",
         "length": 1,
         "material": "copper",
         "points": [
           {
-            "x": 160,
-            "y": 260
+            "x": 340,
+            "y": 320
           }
         ],
         "to": {
-          "compId": "45bed1d8-fe77-4858-8672-87016b26f71e",
-          "index": 0
-        }
-      },
-      {
-        "id": "1fcbe107-dfe1-449f-a81e-eed924f7ca8e",
-        "from": {
-          "compId": "f83cb488-f20f-4bde-9035-194024b295c3",
+          "compId": "eaf7a07d-4ad8-4275-8e59-ac7b7084d40a",
           "index": 4
-        },
-        "to": {
-          "compId": "72dc5cf5-3979-4ba9-8be8-9d1be03f6fb2",
-          "index": 0
-        },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
+        }
       },
       {
-        "id": "dc43cb94-d67f-447c-baa2-39b433914e26",
-        "from": {
-          "compId": "ff05a201-d5a8-429f-8c9e-6111581948fd",
-          "index": 4
-        },
-        "to": {
-          "compId": "72dc5cf5-3979-4ba9-8be8-9d1be03f6fb2",
-          "index": 0
-        },
-        "points": [],
-        "color": "#2f2f34",
         "area": 1.5,
-        "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "2d559329-57f5-4c8c-9b83-56033c6667f6",
+        "color": "#2f2f34",
         "from": {
-          "compId": "ff05a201-d5a8-429f-8c9e-6111581948fd",
-          "index": 2
-        },
-        "to": {
-          "compId": "0d8ac7e9-f5e4-4cce-ad61-f871218b0e0f",
+          "compId": "2b0245cb-9bb4-4d19-bf48-4b177b2995a7",
           "index": 1
         },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
+        "id": "53bbdf3e-c824-427e-a869-6f729f00e9cf",
         "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "4827c171-4720-42b5-82d7-e5fa0339d629",
-        "from": {
-          "compId": "ff05a201-d5a8-429f-8c9e-6111581948fd",
-          "index": 0
-        },
-        "to": {
-          "compId": "0d8ac7e9-f5e4-4cce-ad61-f871218b0e0f",
-          "index": 1
-        },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "a13eed49-1322-423e-ab30-c8c94ad08479",
-        "from": {
-          "compId": "ff05a201-d5a8-429f-8c9e-6111581948fd",
-          "index": 1
-        },
-        "to": {
-          "compId": "45bed1d8-fe77-4858-8672-87016b26f71e",
-          "index": 0
-        },
+        "material": "copper",
         "points": [
           {
-            "x": 240,
-            "y": 240
+            "x": 600,
+            "y": 560
+          },
+          {
+            "x": 20,
+            "y": 560
           }
         ],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
+        "to": {
+          "compId": "cf2610cd-88df-4c34-8214-f640916e51e7",
+          "index": 0
+        }
       },
       {
-        "id": "1b46e302-5843-40e5-bdc4-ab543445b503",
-        "from": {
-          "compId": "ff05a201-d5a8-429f-8c9e-6111581948fd",
-          "index": 3
-        },
-        "to": {
-          "compId": "e809508f-e8d0-41d7-9109-cdc087c2fac3",
-          "index": 0
-        },
-        "points": [],
-        "color": "#2f2f34",
         "area": 1.5,
-        "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "983d89e2-1175-4408-8418-1c0dafc33759",
-        "from": {
-          "compId": "45bed1d8-fe77-4858-8672-87016b26f71e",
-          "index": 1
-        },
-        "to": {
-          "compId": "0d8ac7e9-f5e4-4cce-ad61-f871218b0e0f",
-          "index": 0
-        },
-        "points": [
-          {
-            "x": 260,
-            "y": 180
-          }
-        ],
         "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "174696ec-3961-4397-9a05-cba4de7fb206",
         "from": {
-          "compId": "2c4780cb-8b7f-4352-adcc-35084ae0f380",
-          "index": 0
-        },
-        "to": {
-          "compId": "ff05a201-d5a8-429f-8c9e-6111581948fd",
+          "compId": "eaf7a07d-4ad8-4275-8e59-ac7b7084d40a",
           "index": 2
         },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
+        "id": "df9971d0-7d71-4510-b038-830f7ab8eeae",
         "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "2dc4f8b6-16c5-4a8f-9448-5db9daee7a4e",
-        "from": {
-          "compId": "2c4780cb-8b7f-4352-adcc-35084ae0f380",
-          "index": 1
-        },
-        "to": {
-          "compId": "45bed1d8-fe77-4858-8672-87016b26f71e",
-          "index": 0
-        },
+        "material": "copper",
         "points": [
           {
-            "x": 200,
-            "y": 240
-          }
-        ],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "7ea55ee5-cf64-4054-a77e-d62754aa0729",
-        "from": {
-          "compId": "2c4780cb-8b7f-4352-adcc-35084ae0f380",
-          "index": 3
-        },
-        "to": {
-          "compId": "e809508f-e8d0-41d7-9109-cdc087c2fac3",
-          "index": 0
-        },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "fe1813f6-059a-443b-b2cd-8c23994eeb52",
-        "from": {
-          "compId": "2c4780cb-8b7f-4352-adcc-35084ae0f380",
-          "index": 2
-        },
-        "to": {
-          "compId": "0d8ac7e9-f5e4-4cce-ad61-f871218b0e0f",
-          "index": 1
-        },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "b7bc265f-8885-4756-bd05-feb18c9720bc",
-        "from": {
-          "compId": "e809508f-e8d0-41d7-9109-cdc087c2fac3",
-          "index": 0
-        },
-        "to": {
-          "compId": "e98b2373-77c5-4b09-8119-dec0880c54ab",
-          "index": 3
-        },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "fe71db62-cb45-492c-8ef9-44cf9cbe52c3",
-        "from": {
-          "compId": "e98b2373-77c5-4b09-8119-dec0880c54ab",
-          "index": 2
-        },
-        "to": {
-          "compId": "0d8ac7e9-f5e4-4cce-ad61-f871218b0e0f",
-          "index": 1
-        },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "66263fe3-fbeb-4546-88dd-850552d1062c",
-        "from": {
-          "compId": "e98b2373-77c5-4b09-8119-dec0880c54ab",
-          "index": 0
-        },
-        "to": {
-          "compId": "0d8ac7e9-f5e4-4cce-ad61-f871218b0e0f",
-          "index": 1
-        },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
-      },
-      {
-        "id": "1f5fa596-bc82-46c9-bcdc-b954020bf2a7",
-        "from": {
-          "compId": "e98b2373-77c5-4b09-8119-dec0880c54ab",
-          "index": 1
-        },
-        "to": {
-          "compId": "45bed1d8-fe77-4858-8672-87016b26f71e",
-          "index": 0
-        },
-        "points": [
-          {
-            "x": 320,
-            "y": 100
+            "x": 300,
+            "y": 160
           },
           {
             "x": 120,
-            "y": 120
+            "y": 160
           }
         ],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
+        "to": {
+          "compId": "cf2610cd-88df-4c34-8214-f640916e51e7",
+          "index": 1
+        }
       },
       {
-        "id": "b5a10e24-27be-4566-8211-71a9efe5dc40",
+        "area": 1.5,
+        "color": "#2f2f34",
         "from": {
-          "compId": "f83cb488-f20f-4bde-9035-194024b295c3",
+          "compId": "2b0245cb-9bb4-4d19-bf48-4b177b2995a7",
           "index": 2
         },
+        "id": "d91ca482-c5d3-431b-a938-618f28731474",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 660,
+            "y": 320
+          }
+        ],
         "to": {
-          "compId": "45bed1d8-fe77-4858-8672-87016b26f71e",
+          "compId": "eaf7a07d-4ad8-4275-8e59-ac7b7084d40a",
+          "index": 4
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "ca8e859e-fd04-4796-93e3-255a5712843c",
+          "index": 3
+        },
+        "id": "1970d89c-2468-4568-8d04-fa518cdb365a",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "970582c4-6278-4b37-ab37-3d3b74bc7385",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "c28ba4b7-d992-48bb-8562-0a9c1787b635",
+          "index": 3
+        },
+        "id": "f7021872-798d-4cd9-8f0c-ecfb242e0180",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "40520ca8-175f-499c-ba19-6d11480f52d0",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "19c0ec48-0d37-461a-8bab-770b4b3a6718",
+          "index": 0
+        },
+        "id": "be878880-ea11-4564-8dad-bb6241908129",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "b4bd6b3b-643d-4b66-8525-93da6ae806d2",
+          "index": 3
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "ca8e859e-fd04-4796-93e3-255a5712843c",
+          "index": 2
+        },
+        "id": "806416ec-4b37-4253-8270-73347213f1fb",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 1020,
+            "y": 160
+          }
+        ],
+        "to": {
+          "compId": "c28ba4b7-d992-48bb-8562-0a9c1787b635",
+          "index": 2
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "c28ba4b7-d992-48bb-8562-0a9c1787b635",
+          "index": 2
+        },
+        "id": "2b0d61a8-aba6-456a-9584-92938268fb82",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 1020,
+            "y": 320
+          }
+        ],
+        "to": {
+          "compId": "b4bd6b3b-643d-4b66-8525-93da6ae806d2",
+          "index": 2
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "b4bd6b3b-643d-4b66-8525-93da6ae806d2",
+          "index": 2
+        },
+        "id": "d8354486-077e-4633-88c5-5f79478b6a67",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 980,
+            "y": 620
+          },
+          {
+            "x": 100,
+            "y": 620
+          }
+        ],
+        "to": {
+          "compId": "cf2610cd-88df-4c34-8214-f640916e51e7",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "ca8e859e-fd04-4796-93e3-255a5712843c",
           "index": 1
         },
+        "id": "59ec8078-2c7f-41c7-8c8c-765193be6ed6",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 940,
+            "y": 160
+          }
+        ],
+        "to": {
+          "compId": "c28ba4b7-d992-48bb-8562-0a9c1787b635",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "c28ba4b7-d992-48bb-8562-0a9c1787b635",
+          "index": 1
+        },
+        "id": "401b2f39-8e6f-4a92-8077-aeb61f6e0733",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 940,
+            "y": 320
+          }
+        ],
+        "to": {
+          "compId": "b4bd6b3b-643d-4b66-8525-93da6ae806d2",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "b4bd6b3b-643d-4b66-8525-93da6ae806d2",
+          "index": 1
+        },
+        "id": "1317ab2e-ddda-49cc-9ad3-7422e3eb83cd",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 920,
+            "y": 540
+          },
+          {
+            "x": 60,
+            "y": 540
+          }
+        ],
+        "to": {
+          "compId": "cf2610cd-88df-4c34-8214-f640916e51e7",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "2b0245cb-9bb4-4d19-bf48-4b177b2995a7",
+          "index": 3
+        },
+        "id": "f5ad3994-2b88-488e-9f92-c9f78aef01e8",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "b4bd6b3b-643d-4b66-8525-93da6ae806d2",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "f6833d3c-1810-4cdc-9f87-0861ad5a777a",
+          "index": 1
+        },
+        "id": "d3866c4f-bf24-44a1-8c8f-66f2a21fb11f",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 520,
+            "y": 280
+          },
+          {
+            "x": 520,
+            "y": 440
+          }
+        ],
+        "to": {
+          "compId": "2b0245cb-9bb4-4d19-bf48-4b177b2995a7",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "f6833d3c-1810-4cdc-9f87-0861ad5a777a",
+          "index": 0
+        },
+        "id": "beae4252-abf8-417d-8b9f-501d63f63953",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "eaf7a07d-4ad8-4275-8e59-ac7b7084d40a",
+          "index": 3
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "f6833d3c-1810-4cdc-9f87-0861ad5a777a",
+          "index": 4
+        },
+        "id": "b2764c68-3364-47b8-992c-d127d6a3b96f",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "c28ba4b7-d992-48bb-8562-0a9c1787b635",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "f6833d3c-1810-4cdc-9f87-0861ad5a777a",
+          "index": 2
+        },
+        "id": "4d1520b0-0c8a-4feb-b18e-5482cb9d9349",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 620,
+            "y": 200
+          },
+          {
+            "x": 560,
+            "y": 180
+          }
+        ],
+        "to": {
+          "compId": "f6833d3c-1810-4cdc-9f87-0861ad5a777a",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "f6833d3c-1810-4cdc-9f87-0861ad5a777a",
+          "index": 3
+        },
+        "id": "b7519ab6-da1c-4cc8-b653-23bdcccc2f97",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "ca8e859e-fd04-4796-93e3-255a5712843c",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "b03dba2b-ed7f-4a29-b90c-ffa1554f6ba4",
+          "index": 4
+        },
+        "id": "fc494180-d43f-4efe-bca2-a1af4ae4fbec",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "ca8e859e-fd04-4796-93e3-255a5712843c",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "c28ba4b7-d992-48bb-8562-0a9c1787b635",
+          "index": 0
+        },
+        "id": "5d430c10-fd00-4150-92f7-aac2984d22e3",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "a751133c-2f61-4a95-b479-2197aa9d65b4",
+          "index": 4
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "a751133c-2f61-4a95-b479-2197aa9d65b4",
+          "index": 2
+        },
+        "id": "fb1612e6-2764-4ee9-8462-3d686de5be0a",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "b03dba2b-ed7f-4a29-b90c-ffa1554f6ba4",
+          "index": 2
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "b03dba2b-ed7f-4a29-b90c-ffa1554f6ba4",
+          "index": 2
+        },
+        "id": "fb04375a-2934-4de9-ad2a-3f15a1cf6cf6",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "2b0245cb-9bb4-4d19-bf48-4b177b2995a7",
+          "index": 4
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "2b0245cb-9bb4-4d19-bf48-4b177b2995a7",
+          "index": 4
+        },
+        "id": "0f29b5e3-e86c-4127-a2e7-1cd4366fc627",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "b03dba2b-ed7f-4a29-b90c-ffa1554f6ba4",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "a751133c-2f61-4a95-b479-2197aa9d65b4",
+          "index": 0
+        },
+        "id": "f45bc028-8ba3-4d29-887e-7c423829022f",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "2b0245cb-9bb4-4d19-bf48-4b177b2995a7",
+          "index": 4
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "b03dba2b-ed7f-4a29-b90c-ffa1554f6ba4",
+          "index": 1
+        },
+        "id": "afc293c6-a650-452c-86fe-1ccc2e0c3c90",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 240,
+            "y": 500
+          }
+        ],
+        "to": {
+          "compId": "cf2610cd-88df-4c34-8214-f640916e51e7",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "a751133c-2f61-4a95-b479-2197aa9d65b4",
+          "index": 1
+        },
+        "id": "4dae1391-46a7-41b0-bf87-d473afe6b85e",
+        "length": 1,
+        "material": "copper",
         "points": [
           {
             "x": 220,
-            "y": 380
+            "y": 600
           }
         ],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
+        "to": {
+          "compId": "cf2610cd-88df-4c34-8214-f640916e51e7",
+          "index": 0
+        }
       }
     ],
     "meters": [],
     "canvasSize": {
       "width": 1580,
       "height": 920
+    },
+    "wireDefaults": {
+      "color": "#2f2f34",
+      "area": 1.5,
+      "length": 1,
+      "material": "copper"
     }
   },
-  "updatedAt": 1768523837144,
+  "updatedAt": 1768549413800,
   "createdAt": 1768520969495
 }

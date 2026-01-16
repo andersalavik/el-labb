@@ -9,6 +9,7 @@ const simStatus = document.getElementById("simStatus");
 const gridToggle = document.getElementById("gridToggle");
 const clearBtn = document.getElementById("clearBtn");
 const rotateBtn = document.getElementById("rotateBtn");
+const undoBtn = document.getElementById("undoBtn");
 const meterReadout = document.getElementById("meterReadout");
 const saveNameInput = document.getElementById("saveName");
 const saveBtn = document.getElementById("saveBtn");
@@ -23,6 +24,7 @@ const COMPONENT_W = 80;
 const COMPONENT_H = 40;
 const CONTACTOR_W = 120;
 const CONTACTOR_MIN_H = 70;
+const WIRE_LIVE_THRESHOLD = 0.5;
 
 const state = {
   components: [],
@@ -61,6 +63,7 @@ const state = {
   solveErrors: {},
   wireDefaults: { color: "#2f2f34", area: 1.5, length: 1, material: "copper" },
   debugEntries: [],
+  undoStack: [],
 };
 
 const libraryGroups = [
@@ -302,7 +305,36 @@ function serializeCircuit() {
     ...wire,
     material: wire.material || state.wireDefaults.material,
   }));
-  return { components: state.components, wires, meters, canvasSize: state.canvasSize };
+  return {
+    components: state.components,
+    wires,
+    meters,
+    canvasSize: state.canvasSize,
+    wireDefaults: { ...state.wireDefaults },
+  };
+}
+
+function cloneSnapshot(snapshot) {
+  return JSON.parse(JSON.stringify(snapshot));
+}
+
+function recordHistory() {
+  const snapshot = serializeCircuit();
+  state.undoStack.push(cloneSnapshot(snapshot));
+  if (state.undoStack.length > 50) {
+    state.undoStack.shift();
+  }
+}
+
+function restoreSnapshot(snapshot) {
+  loadFromSnapshot(snapshot);
+  if (snapshot.wireDefaults) {
+    state.wireDefaults = { ...state.wireDefaults, ...snapshot.wireDefaults };
+  }
+  state.simDirty = true;
+  if (state.simRunning) {
+    requestSimulation();
+  }
 }
 
 function formatDebugTime(date) {
@@ -357,6 +389,9 @@ function loadFromSnapshot(snapshot) {
     ...meter,
     value: null,
   }));
+  if (snapshot.wireDefaults) {
+    state.wireDefaults = { ...state.wireDefaults, ...snapshot.wireDefaults };
+  }
   if (snapshot.canvasSize && Number.isFinite(snapshot.canvasSize.width) && Number.isFinite(snapshot.canvasSize.height)) {
     applyCanvasSize(snapshot.canvasSize.width, snapshot.canvasSize.height);
   }
@@ -697,6 +732,7 @@ function getComponentSize(component) {
 function addComponent(type, x, y) {
   const def = libraryItems.get(type);
   if (!def) return;
+  recordHistory();
   const id = crypto.randomUUID();
   state.components.push({
     id,
@@ -1455,16 +1491,23 @@ function drawComponent(component) {
 function drawWire(wire) {
   const points = getWirePathPoints(wire);
   if (!points) return;
+  const energized = isWireEnergized(wire);
   ctx.save();
-  ctx.strokeStyle = wire.color || state.wireDefaults.color;
+  const baseColor = wire.color || state.wireDefaults.color;
+  ctx.strokeStyle = energized ? lightenColor(baseColor, 0.25) : baseColor;
   const area = wire.area ?? state.wireDefaults.area;
   ctx.lineWidth = Math.max(2, Math.min(6, 2 + area / 2));
+  if (energized) {
+    ctx.setLineDash([10, 8]);
+    ctx.lineDashOffset = -state.animTime * 20;
+  }
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
   for (let i = 1; i < points.length; i += 1) {
     ctx.lineTo(points[i].x, points[i].y);
   }
   ctx.stroke();
+  ctx.setLineDash([]);
   ctx.restore();
   if (wire.id === state.selectedWireId && Array.isArray(wire.points)) {
     ctx.save();
@@ -1626,6 +1669,43 @@ function hexToRgb(hex) {
     return { r: 246, g: 196, b: 83 };
   }
   return { r, g, b };
+}
+
+function lightenColor(hex, amount) {
+  const rgb = hexToRgb(hex);
+  const toChannel = (value) => Math.round(value + (255 - value) * amount);
+  return `rgb(${toChannel(rgb.r)}, ${toChannel(rgb.g)}, ${toChannel(rgb.b)})`;
+}
+
+function getComplexDiffMagnitude(a, b) {
+  if (!a || !b) return 0;
+  const re = (a.re || 0) - (b.re || 0);
+  const im = (a.im || 0) - (b.im || 0);
+  return Math.hypot(re, im);
+}
+
+function isWireEnergized(wire) {
+  if (!state.simRunning || !state.lastSolution) return false;
+  const terminalNodes = state.lastSolution.terminalNodes || {};
+  const keyA = `${wire.from.compId}:${wire.from.index}`;
+  const keyB = `${wire.to.compId}:${wire.to.index}`;
+  const nodeA = terminalNodes[keyA];
+  const nodeB = terminalNodes[keyB];
+  if (nodeA === undefined || nodeB === undefined) return false;
+  let dv = 0;
+  const dc = state.lastSolution.nodeVoltages;
+  if (Array.isArray(dc) && dc[nodeA] !== undefined && dc[nodeB] !== undefined) {
+    const vA = Math.abs(dc[nodeA]);
+    const vB = Math.abs(dc[nodeB]);
+    dv = Math.max(dv, vA, vB, Math.abs(dc[nodeA] - dc[nodeB]));
+  }
+  const ac = state.lastSolution.acNodeVoltages;
+  if (Array.isArray(ac) && ac[nodeA] !== undefined && ac[nodeB] !== undefined) {
+    const vA = Math.hypot(ac[nodeA].re || 0, ac[nodeA].im || 0);
+    const vB = Math.hypot(ac[nodeB].re || 0, ac[nodeB].im || 0);
+    dv = Math.max(dv, vA, vB, getComplexDiffMagnitude(ac[nodeA], ac[nodeB]));
+  }
+  return dv > WIRE_LIVE_THRESHOLD;
 }
 
 function formatMeterValue(meter) {
@@ -2192,6 +2272,7 @@ canvas.addEventListener("mousedown", (event) => {
 
   if (state.activeTool === "select") {
     if (wirePoint) {
+      recordHistory();
       state.selectedWireId = wirePoint.wire.id;
       state.selectedId = null;
       state.draggingWirePoint = { wireId: wirePoint.wire.id, index: wirePoint.index };
@@ -2224,6 +2305,7 @@ canvas.addEventListener("mousedown", (event) => {
       }
     }
     if (component) {
+      recordHistory();
       state.selectedId = component.id;
       state.selectedWireId = null;
       state.dragging = { id: component.id, offsetX: component.x - x, offsetY: component.y - y };
@@ -2251,6 +2333,7 @@ canvas.addEventListener("mousedown", (event) => {
         state.wirePoints = [];
       } else {
         if (terminal.compId !== state.wireStart.compId || terminal.index !== state.wireStart.index) {
+          recordHistory();
           state.wires.push({
             id: crypto.randomUUID(),
             from: state.wireStart,
@@ -2278,6 +2361,7 @@ canvas.addEventListener("mousedown", (event) => {
     }
   } else if (state.activeTool === "erase") {
     if (component) {
+      recordHistory();
       state.components = state.components.filter((c) => c.id !== component.id);
       state.wires = state.wires.filter((w) => w.from.compId !== component.id && w.to.compId !== component.id);
       if (component.type === "contactor") delete state.contactorStates[component.id];
@@ -2288,12 +2372,14 @@ canvas.addEventListener("mousedown", (event) => {
       render();
     } else {
       if (wirePoint) {
+        recordHistory();
         wirePoint.wire.points.splice(wirePoint.index, 1);
         render();
         return;
       }
       const wire = findWireAt(x, y);
       if (wire) {
+        recordHistory();
         state.wires = state.wires.filter((w) => w.id !== wire.id);
         state.selectedWireId = null;
         markDirty();
@@ -2413,6 +2499,15 @@ if (canvasResizer) {
   });
 }
 
+if (undoBtn) {
+  undoBtn.addEventListener("click", () => {
+    const snapshot = state.undoStack.pop();
+    if (snapshot) {
+      restoreSnapshot(snapshot);
+    }
+  });
+}
+
 runBtn.addEventListener("click", () => {
   state.simRunning = true;
   markDirty();
@@ -2422,6 +2517,7 @@ runBtn.addEventListener("click", () => {
 });
 
 clearBtn.addEventListener("click", () => {
+  recordHistory();
   state.components = [];
   state.wires = [];
   state.selectedId = null;
@@ -2474,6 +2570,14 @@ rotateBtn.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+    event.preventDefault();
+    const snapshot = state.undoStack.pop();
+    if (snapshot) {
+      restoreSnapshot(snapshot);
+    }
+    return;
+  }
   if (event.key.toLowerCase() !== "r") return;
   const tag = document.activeElement?.tagName;
   if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
