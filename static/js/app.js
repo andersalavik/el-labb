@@ -17,6 +17,14 @@ const saveList = document.getElementById("saveList");
 const canvasResizer = document.getElementById("canvasResizer");
 const debugLog = document.getElementById("debugLog");
 const debugClear = document.getElementById("debugClear");
+const plcModalBackdrop = document.getElementById("plcModalBackdrop");
+const plcModalText = document.getElementById("plcModalText");
+const plcModalSave = document.getElementById("plcModalSave");
+const plcModalCancel = document.getElementById("plcModalCancel");
+const plcModalClose = document.getElementById("plcModalClose");
+const plcDebugBackdrop = document.getElementById("plcDebugBackdrop");
+const plcDebugText = document.getElementById("plcDebugText");
+const plcDebugClose = document.getElementById("plcDebugClose");
 
 const GRID = 20;
 const TERMINAL_RADIUS = 6;
@@ -25,6 +33,7 @@ const COMPONENT_H = 40;
 const CONTACTOR_W = 120;
 const CONTACTOR_MIN_H = 70;
 const WIRE_LIVE_THRESHOLD = 0.5;
+const SIM_POLL_MS = 300;
 
 const state = {
   components: [],
@@ -65,6 +74,9 @@ const state = {
   wireDefaults: { color: "#2f2f34", area: 1.5, length: 1, material: "copper" },
   debugEntries: [],
   undoStack: [],
+  plcEditingId: null,
+  plcPaused: false,
+  plcDebugId: null,
 };
 
 const libraryGroups = [
@@ -239,6 +251,124 @@ function updateSimToggle() {
   simToggle.textContent = `Simläge: ${state.simRunning ? "På" : "Av"}`;
 }
 
+function pauseSimulation() {
+  if (!state.simRunning) return;
+  state.simRunning = false;
+  state.plcPaused = true;
+  simStatus.textContent = "Simulering pausad.";
+  clearSimSchedule();
+  updateSimToggle();
+}
+
+function resumeSimulationIfPaused() {
+  if (!state.plcPaused) return;
+  state.plcPaused = false;
+  state.simRunning = true;
+  markDirty();
+  updateSimToggle();
+}
+
+function openPlcEditor(comp) {
+  if (!plcModalBackdrop || !plcModalText) return;
+  state.plcEditingId = comp.id;
+  plcModalText.value = comp.props.program || "";
+  plcModalBackdrop.classList.add("is-open");
+  plcModalBackdrop.setAttribute("aria-hidden", "false");
+  pauseSimulation();
+  plcModalText.focus();
+}
+
+function closePlcEditor() {
+  if (!plcModalBackdrop) return;
+  plcModalBackdrop.classList.remove("is-open");
+  plcModalBackdrop.setAttribute("aria-hidden", "true");
+  state.plcEditingId = null;
+  resumeSimulationIfPaused();
+}
+
+function savePlcEditor() {
+  if (!plcModalText) return;
+  const comp = state.components.find((c) => c.id === state.plcEditingId);
+  if (comp) {
+    comp.props.program = plcModalText.value;
+    markDirty();
+    render();
+  }
+  closePlcEditor();
+}
+
+function openPlcDebug(comp) {
+  if (!plcDebugBackdrop || !plcDebugText) return;
+  state.plcDebugId = comp.id;
+  updatePlcDebugText(comp);
+  plcDebugBackdrop.classList.add("is-open");
+  plcDebugBackdrop.setAttribute("aria-hidden", "false");
+}
+
+function closePlcDebug() {
+  if (!plcDebugBackdrop) return;
+  plcDebugBackdrop.classList.remove("is-open");
+  plcDebugBackdrop.setAttribute("aria-hidden", "true");
+  state.plcDebugId = null;
+}
+
+function updatePlcDebugText(comp) {
+  if (!plcDebugText) return;
+  const trace = comp?.props?.plcState?.trace;
+  if (Array.isArray(trace) && trace.length) {
+    plcDebugText.textContent = trace.join("\n");
+  } else {
+    plcDebugText.textContent = "Ingen PLC-debug tillgänglig ännu.";
+  }
+}
+
+if (plcModalSave) {
+  plcModalSave.addEventListener("click", () => {
+    savePlcEditor();
+  });
+}
+if (plcModalCancel) {
+  plcModalCancel.addEventListener("click", () => {
+    closePlcEditor();
+  });
+}
+if (plcModalClose) {
+  plcModalClose.addEventListener("click", () => {
+    closePlcEditor();
+  });
+}
+if (plcModalBackdrop) {
+  plcModalBackdrop.addEventListener("click", (event) => {
+    if (event.target === plcModalBackdrop) {
+      closePlcEditor();
+    }
+  });
+}
+if (plcDebugClose) {
+  plcDebugClose.addEventListener("click", () => {
+    closePlcDebug();
+  });
+}
+if (plcDebugBackdrop) {
+  plcDebugBackdrop.addEventListener("click", (event) => {
+    if (event.target === plcDebugBackdrop) {
+      closePlcDebug();
+    }
+  });
+}
+window.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (plcModalBackdrop?.classList.contains("is-open")) {
+    event.preventDefault();
+    closePlcEditor();
+    return;
+  }
+  if (plcDebugBackdrop?.classList.contains("is-open")) {
+    event.preventDefault();
+    closePlcDebug();
+  }
+});
+
 function clearSimSchedule() {
   if (state.simTimerId) {
     clearTimeout(state.simTimerId);
@@ -293,10 +423,16 @@ function scheduleNextSimulation() {
       const delay = getNextBoundaryDelay(comp.props.startTime, comp.props.endTime);
       if (delay !== null) nextDelay = Math.min(nextDelay, delay);
     }
+    if (comp.type === "plc") {
+      const nextTick = comp.props.plcState?.nextTickMs;
+      if (Number.isFinite(nextTick) && nextTick > 0) {
+        nextDelay = Math.min(nextDelay, nextTick);
+      }
+    }
   });
 
-  if (!Number.isFinite(nextDelay) || nextDelay <= 0) return;
-  const delay = Math.max(150, Math.min(nextDelay + 50, 24 * 60 * 60 * 1000));
+  const baseDelay = Number.isFinite(nextDelay) && nextDelay > 0 ? nextDelay + 50 : SIM_POLL_MS;
+  const delay = Math.max(150, Math.min(baseDelay, SIM_POLL_MS));
   state.simTimerId = setTimeout(() => {
     if (state.simRunning) {
       requestSimulation();
@@ -589,6 +725,9 @@ async function requestSimulation() {
         const comp = state.components.find((c) => c.id === id);
         if (comp) {
           comp.props.plcState = meta;
+          if (state.plcDebugId === id) {
+            updatePlcDebugText(comp);
+          }
         }
       });
     }
@@ -677,6 +816,15 @@ function markDirty() {
   if (state.simRunning) {
     requestSimulation();
   }
+}
+
+function resetPlcRuntimeState() {
+  state.components.forEach((comp) => {
+    if (comp.type !== "plc") return;
+    comp.props.plcState = {};
+    comp.props.plcOutputs = [];
+  });
+  state.plcStates = {};
 }
 
 async function updateMeterValue(meter) {
@@ -1943,6 +2091,9 @@ function hitTestMeterBox(x, y) {
 }
 
 function updatePropsPanel() {
+  if (state.simRunning && document.activeElement && propsEl.contains(document.activeElement)) {
+    return;
+  }
   const comp = state.components.find((c) => c.id === state.selectedId);
   const wire = state.wires.find((w) => w.id === state.selectedWireId);
   if (!comp) {
@@ -2186,9 +2337,9 @@ function updatePropsPanel() {
       <label>Ingångströskel (V)
         <input type="number" step="0.1" name="plcThreshold" value="${comp.props.inputThreshold || 9}" />
       </label>
-      <label>Program (LAD-text)
-        <textarea name="plcProgram" rows="8" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${comp.props.program || ""}</textarea>
-      </label>`;
+      <div class="muted">Program redigeras i popup.</div>
+      <button id="plcEditBtn">Redigera PLC-program</button>
+      <button id="plcDebugBtn" class="secondary">PLC-debug</button>`;
   }
   if ("closed" in comp.props) {
     html += `
@@ -2248,7 +2399,6 @@ function updatePropsPanel() {
       if (key === "plcInputs") comp.props.inputs = Math.max(1, Math.min(64, Number(event.target.value) || 1));
       if (key === "plcOutputs") comp.props.outputs = Math.max(1, Math.min(64, Number(event.target.value) || 1));
       if (key === "plcThreshold") comp.props.inputThreshold = Number(event.target.value) || 0;
-      if (key === "plcProgram") comp.props.program = event.target.value;
       if (key === "contactType") comp.props.contactType = event.target.value;
       if (key === "poleCount") {
         const nextCount = Math.max(1, Math.min(6, Number(event.target.value) || 1));
@@ -2271,6 +2421,19 @@ function updatePropsPanel() {
       render();
     });
   });
+
+  const plcEditBtn = propsEl.querySelector("#plcEditBtn");
+  if (plcEditBtn && comp.type === "plc") {
+    plcEditBtn.addEventListener("click", () => {
+      openPlcEditor(comp);
+    });
+  }
+  const plcDebugBtn = propsEl.querySelector("#plcDebugBtn");
+  if (plcDebugBtn && comp.type === "plc") {
+    plcDebugBtn.addEventListener("click", () => {
+      openPlcDebug(comp);
+    });
+  }
 }
 
 function setActiveTool(tool) {
@@ -2645,6 +2808,9 @@ if (undoBtn) {
 }
 
 runBtn.addEventListener("click", () => {
+  if (!state.simRunning) {
+    resetPlcRuntimeState();
+  }
   state.simRunning = true;
   markDirty();
   updatePropsPanel();
@@ -2690,13 +2856,15 @@ gridToggle.addEventListener("click", () => {
 });
 
 simToggle.addEventListener("click", () => {
-  state.simRunning = !state.simRunning;
-  if (state.simRunning) {
+  const nextState = !state.simRunning;
+  if (nextState && !state.simRunning) {
+    resetPlcRuntimeState();
     markDirty();
   } else {
     simStatus.textContent = "Simulering pausad.";
     clearSimSchedule();
   }
+  state.simRunning = nextState;
   updatePropsPanel();
   updateSimToggle();
   render();

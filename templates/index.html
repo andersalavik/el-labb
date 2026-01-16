@@ -98,6 +98,34 @@
       </main>
     </div>
 
+    <div class="modal-backdrop" id="plcModalBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="plcModalTitle">
+        <div class="modal-header">
+          <h3 id="plcModalTitle">PLC-program</h3>
+          <button id="plcModalClose" class="secondary">Stäng</button>
+        </div>
+        <div class="modal-body">
+          <textarea id="plcModalText" rows="16" spellcheck="false"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button id="plcModalCancel">Avbryt</button>
+          <button id="plcModalSave" class="primary">Spara</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="plcDebugBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="plcDebugTitle">
+        <div class="modal-header">
+          <h3 id="plcDebugTitle">PLC-debug</h3>
+          <button id="plcDebugClose" class="secondary">Stäng</button>
+        </div>
+        <div class="modal-body">
+          <pre id="plcDebugText" class="plc-debug-text"></pre>
+        </div>
+      </div>
+    </div>
+
     <script src="/static/js/app.js"></script>
   </body>
 </html>

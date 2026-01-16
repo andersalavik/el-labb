@@ -1,0 +1,650 @@
+{
+  "id": "459b95d8-fe87-4b75-a2f5-1bc5bcdc38c8",
+  "name": "Trafikljus PLC",
+  "snapshot": {
+    "components": [
+      {
+        "id": "82e128e7-b2aa-4f06-bd9d-41cf68befc3e",
+        "props": {
+          "inputThreshold": 12,
+          "inputs": 1,
+          "language": "LAD",
+          "name": "",
+          "outputs": 6,
+          "plcOutputs": [
+            false,
+            false,
+            true,
+            true,
+            false,
+            false
+          ],
+          "plcState": {
+            "counters": {},
+            "mem": {
+              "20": false,
+              "21": true,
+              "27": false,
+              "89": true,
+              "90": false,
+              "91": false,
+              "92": false,
+              "93": false,
+              "94": false,
+              "95": false,
+              "96": false,
+              "97": false
+            },
+            "nextTickMs": 4078,
+            "timers": {
+              "T21": {
+                "in": false,
+                "q": false,
+                "startAt": null
+              },
+              "T22": {
+                "in": true,
+                "q": false,
+                "startAt": 1768553942868
+              },
+              "T23": {
+                "in": false,
+                "q": false,
+                "startAt": null
+              },
+              "T24": {
+                "in": false,
+                "q": false,
+                "startAt": null
+              },
+              "T25": {
+                "in": false,
+                "q": false,
+                "startAt": null
+              },
+              "T26": {
+                "in": false,
+                "q": false,
+                "startAt": null
+              },
+              "T27": {
+                "in": false,
+                "q": false,
+                "startAt": null
+              },
+              "T28": {
+                "in": false,
+                "q": false,
+                "startAt": null
+              }
+            },
+            "trace": [
+              "Inputs: I1=0",
+              "A M21 -> ACC=0",
+              "O M22 -> ACC=1",
+              "O M23 -> ACC=1",
+              "O M24 -> ACC=1",
+              "O M25 -> ACC=1",
+              "O M26 -> ACC=1",
+              "O M27 -> ACC=1",
+              "O M28 -> ACC=1",
+              "= M90 -> ACC=1",
+              "AN M90 -> ACC=0",
+              "S M28 -> ACC=0",
+              "A M21 -> ACC=0",
+              "TON T21 1.0 -> ACC=0",
+              "= M91 -> ACC=0",
+              "A M91 -> ACC=0",
+              "R M21 -> ACC=0",
+              "S M22 -> ACC=0",
+              "A M22 -> ACC=1",
+              "TON T22 5.0 -> ACC=0",
+              "= M92 -> ACC=0",
+              "A M92 -> ACC=0",
+              "R M22 -> ACC=0",
+              "S M23 -> ACC=0",
+              "A M23 -> ACC=0",
+              "TON T23 1.0 -> ACC=0",
+              "= M93 -> ACC=0",
+              "A M93 -> ACC=0",
+              "R M23 -> ACC=0",
+              "S M24 -> ACC=0",
+              "A M24 -> ACC=0",
+              "TON T24 1.0 -> ACC=0",
+              "= M94 -> ACC=0",
+              "A M94 -> ACC=0",
+              "R M24 -> ACC=0",
+              "S M25 -> ACC=0",
+              "A M25 -> ACC=0",
+              "TON T25 1.0 -> ACC=0",
+              "= M95 -> ACC=0",
+              "A M95 -> ACC=0",
+              "R M25 -> ACC=0",
+              "S M26 -> ACC=0",
+              "A M26 -> ACC=0",
+              "TON T26 5.0 -> ACC=0",
+              "= M96 -> ACC=0",
+              "A M96 -> ACC=0",
+              "R M26 -> ACC=0",
+              "S M27 -> ACC=0",
+              "A M27 -> ACC=0",
+              "TON T27 1.0 -> ACC=0",
+              "= M97 -> ACC=0",
+              "A M97 -> ACC=0",
+              "R M27 -> ACC=0",
+              "S M28 -> ACC=0",
+              "A M28 -> ACC=0",
+              "TON T28 1.0 -> ACC=0",
+              "= M98 -> ACC=0",
+              "A M98 -> ACC=0",
+              "R M28 -> ACC=0",
+              "S M21 -> ACC=0",
+              "A M22 -> ACC=1",
+              "= Q3 -> ACC=1",
+              "A M21 -> ACC=0",
+              "O M23 -> ACC=0",
+              "= Q2 -> ACC=0",
+              "A M21 -> ACC=0",
+              "O M24 -> ACC=0",
+              "O M25 -> ACC=0",
+              "O M26 -> ACC=0",
+              "O M27 -> ACC=0",
+              "O M28 -> ACC=0",
+              "= Q1 -> ACC=0",
+              "A M26 -> ACC=0",
+              "= Q6 -> ACC=0",
+              "A M25 -> ACC=0",
+              "O M27 -> ACC=0",
+              "= Q5 -> ACC=0",
+              "A M25 -> ACC=0",
+              "O M21 -> ACC=0",
+              "O M22 -> ACC=1",
+              "O M23 -> ACC=1",
+              "O M24 -> ACC=1",
+              "O M28 -> ACC=1",
+              "= Q4 -> ACC=1",
+              "Outputs: Q1=0, Q2=0, Q3=1, Q4=1, Q5=0, Q6=0"
+            ],
+            "trig": {}
+          },
+          "program": "; ==========================================\n; 2-v\u00e4gs Trafikljus (Sverige korrekt + loop)\n; A: Q1=R\u00f6d Q2=Gul Q3=Gr\u00f6n\n; B: Q4=R\u00f6d Q5=Gul Q6=Gr\u00f6n\n; ==========================================\n\n; Steg (anv\u00e4nder M21..M28)\n; M21 = A_R\u00d6D_GUL\n; M22 = A_GR\u00d6N\n; M23 = A_GUL\n; M24 = ALL_R\u00d6TT_1\n; M25 = B_R\u00d6D_GUL\n; M26 = B_GR\u00d6N\n; M27 = B_GUL\n; M28 = ALL_R\u00d6TT_2\n\n; --- STARTINIT: om inget steg \u00e4r aktivt, starta i ALL-R\u00d6TT_2 ---\nA M21\nO M22\nO M23\nO M24\nO M25\nO M26\nO M27\nO M28\n= M90\n\nAN M90\nS M28\n\n\n; --- A R\u00d6D+GUL 1s ---\nA M21\nTON T21 1.0\n= M91\n\nA M91\nR M21\nS M22\n\n\n; --- A GR\u00d6N 5s ---\nA M22\nTON T22 5.0\n= M92\n\nA M92\nR M22\nS M23\n\n\n; --- A GUL 1s ---\nA M23\nTON T23 1.0\n= M93\n\nA M93\nR M23\nS M24\n\n\n; --- ALL-R\u00d6TT 1s (innan B f\u00e5r r\u00f6d+gul) ---\nA M24\nTON T24 1.0\n= M94\n\nA M94\nR M24\nS M25\n\n\n; --- B R\u00d6D+GUL 1s ---\nA M25\nTON T25 1.0\n= M95\n\nA M95\nR M25\nS M26\n\n\n; --- B GR\u00d6N 5s ---\nA M26\nTON T26 5.0\n= M96\n\nA M96\nR M26\nS M27\n\n\n; --- B GUL 1s ---\nA M27\nTON T27 1.0\n= M97\n\nA M97\nR M27\nS M28\n\n\n; --- ALL-R\u00d6TT 1s (innan A f\u00e5r r\u00f6d+gul) ---\nA M28\nTON T28 1.0\n= M98\n\nA M98\nR M28\nS M21\n\n\n; ==========================================\n; UTG\u00c5NGAR (tydligt: r\u00f6d+gul = b\u00e5da t\u00e4nda)\n; ==========================================\n\n; --- A ---\n; A GR\u00d6N bara i M22\nA M22\n= Q3\n\n; A GUL i M21 (r\u00f6d+gul) eller M23 (gul)\nA M21\nO M23\n= Q2\n\n; A R\u00d6D i M21 + ALLA steg d\u00e4r A ska st\u00e5 r\u00f6tt (B-fasen + all-r\u00f6tt)\n; (R\u00f6d ska INTE vara t\u00e4nd i M22/M23)\nA M21\nO M24\nO M25\nO M26\nO M27\nO M28\n= Q1\n\n\n; --- B ---\n; B GR\u00d6N bara i M26\nA M26\n= Q6\n\n; B GUL i M25 (r\u00f6d+gul) eller M27 (gul)\nA M25\nO M27\n= Q5\n\n; B R\u00d6D i M25 + ALLA steg d\u00e4r B ska st\u00e5 r\u00f6tt (A-fasen + all-r\u00f6tt)\n; (R\u00f6d ska INTE vara t\u00e4nd i M26/M27)\nA M25\nO M21\nO M22\nO M23\nO M24\nO M28\n= Q4"
+        },
+        "rotation": 0,
+        "type": "plc",
+        "variant": "plc",
+        "x": 540,
+        "y": 200
+      },
+      {
+        "id": "4e48d505-7f73-4b00-915e-37d6c51a6616",
+        "props": {
+          "connection": "Y",
+          "frequency": 50,
+          "name": "",
+          "neutral": true,
+          "supplyType": "DC",
+          "value": 12
+        },
+        "rotation": 0,
+        "type": "voltage_source",
+        "variant": "voltage_source",
+        "x": 240,
+        "y": 80
+      },
+      {
+        "id": "22815ab9-191d-4d19-b228-d484b2be3ba3",
+        "props": {
+          "litColor": "#ff2600",
+          "name": "",
+          "ratedVoltage": 12,
+          "threshold": 6,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 820,
+        "y": 180
+      },
+      {
+        "id": "66549180-9d9d-4b6b-b704-2b63f80b1868",
+        "props": {
+          "closed": false,
+          "name": ""
+        },
+        "rotation": 0,
+        "type": "push_button",
+        "variant": "push_button",
+        "x": 320,
+        "y": 240
+      },
+      {
+        "id": "3de7b502-64b2-40d6-84fd-682346eac462",
+        "props": {
+          "litColor": "#fffb00",
+          "name": "",
+          "ratedVoltage": 12,
+          "threshold": 6,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 820,
+        "y": 260
+      },
+      {
+        "id": "053c34b6-54d6-4094-a725-307ab2c321d4",
+        "props": {
+          "litColor": "#00f900",
+          "name": "",
+          "ratedVoltage": 12,
+          "threshold": 6,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 820,
+        "y": 340
+      },
+      {
+        "id": "9f73dcf7-75b6-4f71-969d-904d69239958",
+        "props": {
+          "litColor": "#ff2600",
+          "name": "",
+          "ratedVoltage": 12,
+          "threshold": 6,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 1200,
+        "y": 180
+      },
+      {
+        "id": "f8b8b761-9a7e-4d11-9761-664e064e2c3b",
+        "props": {
+          "litColor": "#fffb00",
+          "name": "",
+          "ratedVoltage": 12,
+          "threshold": 6,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 1200,
+        "y": 260
+      },
+      {
+        "id": "e561a7a0-1fea-4ffe-9b94-c47a546b96b8",
+        "props": {
+          "litColor": "#00f900",
+          "name": "",
+          "ratedVoltage": 12,
+          "threshold": 6,
+          "value": 80
+        },
+        "rotation": 0,
+        "type": "lamp",
+        "variant": "lamp",
+        "x": 1200,
+        "y": 340
+      }
+    ],
+    "wires": [
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "82e128e7-b2aa-4f06-bd9d-41cf68befc3e",
+          "index": 3
+        },
+        "id": "d621517f-da66-457c-9557-f367e0b18481",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "22815ab9-191d-4d19-b228-d484b2be3ba3",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "4e48d505-7f73-4b00-915e-37d6c51a6616",
+          "index": 1
+        },
+        "id": "57881c02-fb2a-40f3-aa0d-ce6283b0f24f",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "66549180-9d9d-4b6b-b704-2b63f80b1868",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "66549180-9d9d-4b6b-b704-2b63f80b1868",
+          "index": 1
+        },
+        "id": "6e616ed3-5b08-491a-861f-6ad84413240f",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "82e128e7-b2aa-4f06-bd9d-41cf68befc3e",
+          "index": 2
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "4e48d505-7f73-4b00-915e-37d6c51a6616",
+          "index": 1
+        },
+        "id": "4b67368c-a60d-4fa7-876a-0eea6359e6e0",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 360,
+            "y": 80
+          },
+          {
+            "x": 360,
+            "y": 200
+          }
+        ],
+        "to": {
+          "compId": "82e128e7-b2aa-4f06-bd9d-41cf68befc3e",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "82e128e7-b2aa-4f06-bd9d-41cf68befc3e",
+          "index": 0
+        },
+        "id": "44f11211-8f79-4b59-8881-60ce8fdf86a4",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 400,
+            "y": 180
+          },
+          {
+            "x": 400,
+            "y": 40
+          },
+          {
+            "x": 200,
+            "y": 40
+          }
+        ],
+        "to": {
+          "compId": "4e48d505-7f73-4b00-915e-37d6c51a6616",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "22815ab9-191d-4d19-b228-d484b2be3ba3",
+          "index": 1
+        },
+        "id": "60f5c065-05b6-4dc4-b7f2-844b734bcaed",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "3de7b502-64b2-40d6-84fd-682346eac462",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "3de7b502-64b2-40d6-84fd-682346eac462",
+          "index": 1
+        },
+        "id": "d07abda4-fc59-407b-bffc-4b26fd3e95ce",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "053c34b6-54d6-4094-a725-307ab2c321d4",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "053c34b6-54d6-4094-a725-307ab2c321d4",
+          "index": 1
+        },
+        "id": "cee953d3-f57b-4aea-a1d4-66abff18c79e",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 860,
+            "y": 620
+          },
+          {
+            "x": 200,
+            "y": 620
+          }
+        ],
+        "to": {
+          "compId": "4e48d505-7f73-4b00-915e-37d6c51a6616",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "82e128e7-b2aa-4f06-bd9d-41cf68befc3e",
+          "index": 4
+        },
+        "id": "1036e683-76e5-4d65-8b28-15e3283edc92",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 740,
+            "y": 200
+          },
+          {
+            "x": 740,
+            "y": 260
+          }
+        ],
+        "to": {
+          "compId": "3de7b502-64b2-40d6-84fd-682346eac462",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "82e128e7-b2aa-4f06-bd9d-41cf68befc3e",
+          "index": 5
+        },
+        "id": "082e45e6-c899-4070-a07d-734972f504a4",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 660,
+            "y": 220
+          },
+          {
+            "x": 660,
+            "y": 340
+          }
+        ],
+        "to": {
+          "compId": "053c34b6-54d6-4094-a725-307ab2c321d4",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "9f73dcf7-75b6-4f71-969d-904d69239958",
+          "index": 1
+        },
+        "id": "3dac97a4-f845-4515-8024-7791df2887bc",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "f8b8b761-9a7e-4d11-9761-664e064e2c3b",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "f8b8b761-9a7e-4d11-9761-664e064e2c3b",
+          "index": 1
+        },
+        "id": "fb743a5a-1430-47cc-a51a-f5210ac72485",
+        "length": 1,
+        "material": "copper",
+        "points": [],
+        "to": {
+          "compId": "e561a7a0-1fea-4ffe-9b94-c47a546b96b8",
+          "index": 1
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "e561a7a0-1fea-4ffe-9b94-c47a546b96b8",
+          "index": 1
+        },
+        "id": "63de6221-6cfd-4c09-8e35-f56d9a7f2e94",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 1240,
+            "y": 620
+          },
+          {
+            "x": 200,
+            "y": 620
+          }
+        ],
+        "to": {
+          "compId": "4e48d505-7f73-4b00-915e-37d6c51a6616",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "82e128e7-b2aa-4f06-bd9d-41cf68befc3e",
+          "index": 6
+        },
+        "id": "cc52de60-0efe-4c49-b5fb-ec5ff648e78e",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 820,
+            "y": 220
+          }
+        ],
+        "to": {
+          "compId": "9f73dcf7-75b6-4f71-969d-904d69239958",
+          "index": 0
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "f8b8b761-9a7e-4d11-9761-664e064e2c3b",
+          "index": 0
+        },
+        "id": "b047af65-6350-4ce3-bd5f-9eb0a0b33da8",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 960,
+            "y": 240
+          },
+          {
+            "x": 720,
+            "y": 220
+          }
+        ],
+        "to": {
+          "compId": "82e128e7-b2aa-4f06-bd9d-41cf68befc3e",
+          "index": 7
+        }
+      },
+      {
+        "area": 1.5,
+        "color": "#2f2f34",
+        "from": {
+          "compId": "82e128e7-b2aa-4f06-bd9d-41cf68befc3e",
+          "index": 8
+        },
+        "id": "e5dd7033-d053-431c-9ed1-0e321e36a772",
+        "length": 1,
+        "material": "copper",
+        "points": [
+          {
+            "x": 720,
+            "y": 280
+          },
+          {
+            "x": 900,
+            "y": 300
+          }
+        ],
+        "to": {
+          "compId": "e561a7a0-1fea-4ffe-9b94-c47a546b96b8",
+          "index": 0
+        }
+      }
+    ],
+    "meters": [],
+    "canvasSize": {
+      "width": 1580,
+      "height": 920
+    },
+    "wireDefaults": {
+      "color": "#2f2f34",
+      "area": 1.5,
+      "length": 1,
+      "material": "copper"
+    }
+  },
+  "updatedAt": 1768553943865,
+  "createdAt": 1768551712010
+}

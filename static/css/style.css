@@ -304,6 +304,75 @@ canvas {
   box-shadow: var(--shadow);
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 18, 18, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  padding: 24px;
+}
+
+.modal-backdrop.is-open {
+  display: flex;
+}
+
+.modal {
+  background: #fffdf8;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  width: min(720px, 90vw);
+  display: grid;
+  gap: 12px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.modal-body textarea {
+  width: 100%;
+  min-height: 300px;
+  border-radius: 12px;
+  border: 1px solid #d7d1c6;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  background: #fff;
+}
+
+.plc-debug-text {
+  margin: 0;
+  width: 100%;
+  min-height: 300px;
+  max-height: 420px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid #d7d1c6;
+  padding: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  background: #fff;
+  white-space: pre-wrap;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .muted {
   color: var(--muted);
   font-size: 13px;

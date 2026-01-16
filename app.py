@@ -934,6 +934,18 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
         trig_state = plc_state.get("trig", {})
         timers_output = {}
         counters_output = {}
+        next_tick_ms = None
+        if isinstance(memories_state, dict):
+            normalized_mem = {}
+            for key, value in memories_state.items():
+                if isinstance(key, int):
+                    normalized_mem[key] = value
+                    continue
+                if isinstance(key, str) and key.isdigit():
+                    normalized_mem[int(key)] = value
+            memories_state = normalized_mem
+        else:
+            memories_state = {}
         for key, data in counters_state.items():
             if not key.startswith("C"):
                 continue
@@ -963,15 +975,28 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                 "mem": memories_state,
                 "counters": counters_state,
                 "trig": trig_state,
+                "trace": ["PLC-sprak ej stodt (endast LAD)."],
             }
             continue
         acc = None
+        trace = []
+        if program.strip():
+            inputs_snapshot = ", ".join(
+                f"I{idx + 1}={'1' if value else '0'}" for idx, value in enumerate(inputs)
+            )
+            trace.append(f"Inputs: {inputs_snapshot}")
+        else:
+            trace.append("Inget PLC-program angivet.")
         for raw in program.splitlines():
             line = raw.strip()
             if not line:
                 acc = None
                 continue
-            if line.startswith("//") or line.startswith("#") or line.startswith(";"):
+            if ";" in line:
+                line = line.split(";", 1)[0].strip()
+                if not line:
+                    continue
+            if line.startswith("//") or line.startswith("#"):
                 continue
             parts = line.replace("=", " = ").split()
             if not parts:
@@ -984,6 +1009,7 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                 if operand is None:
                     continue
                 acc = operand
+                trace.append(f"{line} -> ACC={'1' if acc else '0'}")
                 continue
             if op == "MOVE" and len(parts) >= 3:
                 operand = _parse_plc_operand(
@@ -1007,6 +1033,7 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                         continue
                     if idx >= 0:
                         memories_state[idx] = bool(acc)
+                trace.append(f"{line} -> ACC={'1' if acc else '0'}")
                 acc = None
                 continue
             if op in {"A", "AN", "O", "ON", "U", "UN"} and len(parts) >= 2:
@@ -1023,6 +1050,7 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                     acc = operand
                 else:
                     acc = acc and operand if op in {"A", "AN", "U", "UN"} else acc or operand
+                trace.append(f"{line} -> ACC={'1' if acc else '0'}")
                 continue
             if op in {"TON", "TOF", "TP"} and len(parts) >= 3:
                 timer_id = parts[1].upper()
@@ -1049,6 +1077,10 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                             start_at = now
                         elapsed = max(0, now - (start_at or now))
                         output = elapsed >= delay_ms
+                        if not output and start_at is not None and delay_ms > 0:
+                            remaining = max(0, delay_ms - elapsed)
+                            if remaining > 0:
+                                next_tick_ms = remaining if next_tick_ms is None else min(next_tick_ms, remaining)
                     else:
                         output = False
                         start_at = None
@@ -1061,6 +1093,10 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                             start_at = now
                         elapsed = max(0, now - (start_at or now))
                         output = elapsed < delay_ms
+                        if output and start_at is not None and delay_ms > 0:
+                            remaining = max(0, delay_ms - elapsed)
+                            if remaining > 0:
+                                next_tick_ms = remaining if next_tick_ms is None else min(next_tick_ms, remaining)
                 elif op == "TP":
                     if acc_value and not prev_in:
                         start_at = now
@@ -1072,10 +1108,15 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                             start_at = None
                     if not acc_value and start_at is None:
                         output = False
+                    if output and start_at is not None and delay_ms > 0:
+                        remaining = max(0, delay_ms - (now - start_at))
+                        if remaining > 0:
+                            next_tick_ms = remaining if next_tick_ms is None else min(next_tick_ms, remaining)
 
                 timers_state[timer_id] = {"in": acc_value, "q": output, "startAt": start_at}
                 timers_output[t_index] = output
                 acc = output
+                trace.append(f"{line} -> ACC={'1' if acc else '0'}")
                 continue
             if op in {"CTU", "CTD"} and len(parts) >= 2:
                 counter_id = parts[1].upper()
@@ -1117,6 +1158,7 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                 counters_state[counter_id] = {"cv": cv, "pv": pv, "cu": acc_value, "q": q}
                 counters_output[c_index] = q
                 acc = q
+                trace.append(f"{line} -> ACC={'1' if acc else '0'}")
                 continue
             if op in {"R_TRIG", "F_TRIG"} and len(parts) >= 2:
                 target = parts[1].upper()
@@ -1142,6 +1184,7 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                     if 0 <= idx < outputs_count:
                         outputs[idx] = pulse
                 acc = pulse
+                trace.append(f"{line} -> ACC={'1' if acc else '0'}")
                 continue
             if op == "=" and len(parts) >= 2:
                 target = parts[1].upper()
@@ -1166,7 +1209,7 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                             continue
                         if idx >= 0:
                             memories_state[idx] = bool(acc)
-                    acc = None
+                    trace.append(f"{line} -> ACC={'1' if acc else '0'}")
                     continue
                 else:
                     continue
@@ -1176,10 +1219,13 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                 except ValueError:
                     continue
                 if 0 <= idx < outputs_count:
+                    acc_value = bool(acc) if acc is not None else False
                     if op == "R":
-                        outputs[idx] = False
+                        if acc_value:
+                            outputs[idx] = False
                     elif op == "S":
-                        outputs[idx] = True
+                        if acc_value:
+                            outputs[idx] = True
                     else:
                         outputs[idx] = bool(acc)
             if target.startswith("M"):
@@ -1188,10 +1234,13 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                 except ValueError:
                     continue
                 if idx >= 0:
+                    acc_value = bool(acc) if acc is not None else False
                     if op == "R":
-                        memories_state[idx] = False
+                        if acc_value:
+                            memories_state[idx] = False
                     elif op == "S":
-                        memories_state[idx] = True
+                        if acc_value:
+                            memories_state[idx] = True
                     else:
                         memories_state[idx] = bool(acc)
             if target.startswith("C") and op in {"R", "S"}:
@@ -1200,6 +1249,10 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                 except ValueError:
                     continue
                 if idx >= 0:
+                    acc_value = bool(acc) if acc is not None else False
+                    if not acc_value:
+                        acc = None
+                        continue
                     key = f"C{idx + 1}"
                     c_state = counters_state.get(key, {})
                     pv = int(c_state.get("pv", 1))
@@ -1209,14 +1262,23 @@ def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim
                     else:
                         counters_state[key] = {"cv": pv, "pv": pv, "cu": False, "q": True}
                         counters_output[idx] = True
-            acc = None
+            trace.append(f"{line} -> ACC={'1' if acc else '0'}")
+        outputs_snapshot = ", ".join(
+            f"Q{idx + 1}={'1' if value else '0'}" for idx, value in enumerate(outputs)
+        )
+        trace.append(f"Outputs: {outputs_snapshot}")
+        if len(trace) > 200:
+            trace = trace[:200] + [f"... {len(trace) - 200} rader till ..."]
         states[comp["id"]] = outputs
         meta[comp["id"]] = {
             "timers": timers_state,
             "mem": memories_state,
             "counters": counters_state,
             "trig": trig_state,
+            "trace": trace,
         }
+        if next_tick_ms is not None:
+            meta[comp["id"]]["nextTickMs"] = int(next_tick_ms)
     return states, meta
 
 
@@ -1543,6 +1605,7 @@ def solve_network(payload):
             ac_solution["node_voltages"] if ac_solution else None,
             sim_time,
         )
+        plc_meta = updated_plc_meta
         if (
             updated == contactor_states
             and updated_timers == timer_states
@@ -1552,7 +1615,6 @@ def solve_network(payload):
         contactor_states = updated
         timer_states = updated_timers
         plc_states = updated_plc
-        plc_meta = updated_plc_meta
 
     return {
         "components": components,
