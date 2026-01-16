@@ -13,67 +13,74 @@
     <div class="app">
       <aside class="sidebar">
         <header class="brand">
-          <div class="brand-title">El-labb</div>
-          <div class="brand-sub">Rita & simulera AC/DC-scheman</div>
+          <div class="brand-title" data-i18n="brand.title">El-labb</div>
+          <div class="brand-sub" data-i18n="brand.subtitle">Rita & simulera AC/DC-scheman</div>
+          <div class="language-picker">
+            <label data-i18n="language.label" for="languageSelect">Språk</label>
+            <select id="languageSelect">
+              <option value="sv">Svenska</option>
+              <option value="en">English</option>
+            </select>
+          </div>
         </header>
 
         <section class="panel">
-          <h2>Verktyg</h2>
+          <h2 data-i18n="panel.tools">Verktyg</h2>
           <div class="tool-buttons" id="toolButtons">
-            <button data-tool="select" class="active">Markera</button>
-            <button data-tool="wire">Ledning</button>
-            <button data-tool="meter">Multimeter</button>
-            <button data-tool="erase">Radera</button>
+            <button data-tool="select" class="active" data-i18n="tool.select">Markera</button>
+            <button data-tool="wire" data-i18n="tool.wire">Ledning</button>
+            <button data-tool="meter" data-i18n="tool.meter">Multimeter</button>
+            <button data-tool="erase" data-i18n="tool.erase">Radera</button>
           </div>
         </section>
 
         <section class="panel">
-          <h2>Bibliotek</h2>
+          <h2 data-i18n="panel.library">Bibliotek</h2>
           <div class="library" id="library"></div>
         </section>
 
         <section class="panel">
-          <h2>Egenskaper</h2>
+          <h2 data-i18n="panel.props">Egenskaper</h2>
           <div class="props" id="props">
-            <div class="muted">Välj en komponent för att ändra värden.</div>
+            <div class="muted" data-i18n="props.empty">Välj en komponent för att ändra värden.</div>
           </div>
         </section>
 
         <section class="panel">
-          <h2>Multimeter</h2>
+          <h2 data-i18n="panel.meter">Multimeter</h2>
           <div class="meter-settings">
-            <label><input type="radio" name="meterMode" value="voltage" checked /> DC Volt (V)</label>
-            <label><input type="radio" name="meterMode" value="current" /> DC Ampere (A)</label>
-            <label><input type="radio" name="meterMode" value="resistance" /> Ohm (Ω)</label>
-            <label><input type="radio" name="meterMode" value="ac_voltage" /> AC Volt RMS (V)</label>
-            <label><input type="radio" name="meterMode" value="ac_current" /> AC Ampere RMS (A)</label>
-            <label><input type="radio" name="meterMode" value="ac_phase" /> Fasvinkel (°)</label>
-            <label><input type="radio" name="meterMode" value="ac_power_p" /> Effekt P (W)</label>
-            <label><input type="radio" name="meterMode" value="ac_power_q" /> Effekt Q (var)</label>
-            <label><input type="radio" name="meterMode" value="ac_power_s" /> Effekt S (VA)</label>
-            <label><input type="radio" name="meterMode" value="ac_pf" /> cos φ</label>
+            <label><input type="radio" name="meterMode" value="voltage" checked /> <span data-i18n="meter.dc_voltage">DC Volt (V)</span></label>
+            <label><input type="radio" name="meterMode" value="current" /> <span data-i18n="meter.dc_current">DC Ampere (A)</span></label>
+            <label><input type="radio" name="meterMode" value="resistance" /> <span data-i18n="meter.resistance">Ohm (Ω)</span></label>
+            <label><input type="radio" name="meterMode" value="ac_voltage" /> <span data-i18n="meter.ac_voltage">AC Volt RMS (V)</span></label>
+            <label><input type="radio" name="meterMode" value="ac_current" /> <span data-i18n="meter.ac_current">AC Ampere RMS (A)</span></label>
+            <label><input type="radio" name="meterMode" value="ac_phase" /> <span data-i18n="meter.ac_phase">Fasvinkel (°)</span></label>
+            <label><input type="radio" name="meterMode" value="ac_power_p" /> <span data-i18n="meter.ac_power_p">Effekt P (W)</span></label>
+            <label><input type="radio" name="meterMode" value="ac_power_q" /> <span data-i18n="meter.ac_power_q">Effekt Q (var)</span></label>
+            <label><input type="radio" name="meterMode" value="ac_power_s" /> <span data-i18n="meter.ac_power_s">Effekt S (VA)</span></label>
+            <label><input type="radio" name="meterMode" value="ac_pf" /> <span data-i18n="meter.ac_pf">cos φ</span></label>
           </div>
           <div class="meter-readout" id="meterReadout">-</div>
         </section>
 
         <section class="panel">
-          <h2>Simulering</h2>
-          <div class="sim-status" id="simStatus">Redo.</div>
+          <h2 data-i18n="panel.simulation">Simulering</h2>
+          <div class="sim-status" id="simStatus" data-i18n="sim.ready">Redo.</div>
         </section>
 
         <section class="panel">
-          <h2>Debug</h2>
+          <h2 data-i18n="panel.debug">Debug</h2>
           <div class="debug-controls">
-            <button id="debugClear">Rensa logg</button>
+            <button id="debugClear" data-i18n="debug.clear">Rensa logg</button>
           </div>
           <div class="debug-log" id="debugLog"></div>
         </section>
 
         <section class="panel">
-          <h2>Spara & ladda</h2>
+          <h2 data-i18n="panel.save">Spara & ladda</h2>
           <div class="save-row">
-            <input id="saveName" type="text" placeholder="Namn på labb" />
-            <button id="saveBtn">Spara</button>
+            <input id="saveName" type="text" placeholder="Namn på labb" data-i18n-placeholder="save.placeholder" />
+            <button id="saveBtn" data-i18n="save.save">Spara</button>
           </div>
           <div class="save-list" id="saveList"></div>
         </section>
@@ -81,19 +88,19 @@
 
       <main class="workspace">
         <div class="toolbar">
-          <div class="toolbar-left">Canvas</div>
+          <div class="toolbar-left" data-i18n="toolbar.canvas">Canvas</div>
           <div class="toolbar-right">
-            <button id="runBtn" class="primary">Kör simulering</button>
+            <button id="runBtn" class="primary" data-i18n="sim.run">Kör simulering</button>
             <button id="simToggle" class="secondary">Simläge: Av</button>
             <button id="gridToggle">Rutnät: På</button>
-            <button id="rotateBtn">Rotera 90°</button>
-            <button id="undoBtn">Ångra</button>
-            <button id="clearBtn" class="danger">Rensa</button>
+            <button id="rotateBtn" data-i18n="canvas.rotate">Rotera 90°</button>
+            <button id="undoBtn" data-i18n="canvas.undo">Ångra</button>
+            <button id="clearBtn" class="danger" data-i18n="canvas.clear">Rensa</button>
           </div>
         </div>
         <div class="canvas-wrap">
           <canvas id="schematic"></canvas>
-          <div class="canvas-resizer" id="canvasResizer" aria-label="Ändra canvas-storlek"></div>
+          <div class="canvas-resizer" id="canvasResizer" aria-label="Ändra canvas-storlek" data-i18n-aria="canvas.resize"></div>
         </div>
       </main>
     </div>
@@ -101,15 +108,15 @@
     <div class="modal-backdrop" id="plcModalBackdrop" aria-hidden="true">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="plcModalTitle">
         <div class="modal-header">
-          <h3 id="plcModalTitle">PLC-program</h3>
-          <button id="plcModalClose" class="secondary">Stäng</button>
+          <h3 id="plcModalTitle" data-i18n="plc.editor.title">PLC-program</h3>
+          <button id="plcModalClose" class="secondary" data-i18n="common.close">Stäng</button>
         </div>
         <div class="modal-body">
           <textarea id="plcModalText" rows="16" spellcheck="false"></textarea>
         </div>
         <div class="modal-actions">
-          <button id="plcModalCancel">Avbryt</button>
-          <button id="plcModalSave" class="primary">Spara</button>
+          <button id="plcModalCancel" data-i18n="common.cancel">Avbryt</button>
+          <button id="plcModalSave" class="primary" data-i18n="common.save">Spara</button>
         </div>
       </div>
     </div>
@@ -117,8 +124,8 @@
     <div class="modal-backdrop" id="plcDebugBackdrop" aria-hidden="true">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="plcDebugTitle">
         <div class="modal-header">
-          <h3 id="plcDebugTitle">PLC-debug</h3>
-          <button id="plcDebugClose" class="secondary">Stäng</button>
+          <h3 id="plcDebugTitle" data-i18n="plc.debug.title">PLC-debug</h3>
+          <button id="plcDebugClose" class="secondary" data-i18n="common.close">Stäng</button>
         </div>
         <div class="modal-body">
           <pre id="plcDebugText" class="plc-debug-text"></pre>

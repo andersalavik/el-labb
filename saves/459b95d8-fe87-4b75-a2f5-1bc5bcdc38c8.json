@@ -24,6 +24,11 @@
             "mem": {
               "20": false,
               "21": true,
+              "22": false,
+              "23": false,
+              "24": false,
+              "25": false,
+              "26": false,
               "27": false,
               "89": true,
               "90": false,
@@ -35,7 +40,7 @@
               "96": false,
               "97": false
             },
-            "nextTickMs": 4078,
+            "nextTickMs": 854,
             "timers": {
               "T21": {
                 "in": false,
@@ -45,7 +50,7 @@
               "T22": {
                 "in": true,
                 "q": false,
-                "startAt": 1768553942868
+                "startAt": 1768555372840
               },
               "T23": {
                 "in": false,
@@ -645,6 +650,6 @@
       "material": "copper"
     }
   },
-  "updatedAt": 1768553943865,
+  "updatedAt": 1768555377068,
   "createdAt": 1768551712010
 }

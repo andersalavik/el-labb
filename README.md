@@ -1,102 +1,103 @@
 # El-labb
 
-Ett webbaserat verktyg för att rita och simulera AC/DC‑scheman med symbolbibliotek, multimeter, kontaktorer och motorer.
+A web-based tool for drawing and simulating AC/DC schematics with a component library, multimeter, contactors, motors, timers, and PLC logic.
 
-## Funktioner
+## Features
 
-- Dra och släpp komponenter från biblioteket.
-- AC 1‑fas, AC 3‑fas (Y/Delta) och DC‑källor.
-- Kontaktorer (standard och omkastande) med valfritt antal poler.
-- Lampor med valbar ljusfärg.
-- Multimetrar som kan ligga kvar i schemat.
-- Simulering körs på serversidan (Flask).
-- Spara och ladda labbar som JSON.
-- Knäckpunkter på kablar (lägg till/drag/ta bort).
-- Manuell resize av canvas (sparas i labb).
-- Debug‑logg för simuleringar.
-- PLC‑komponent med LAD‑text och live PLC‑debug.
+- Drag-and-drop components from the library.
+- AC 1-phase, AC 3-phase (Y/Delta), and DC sources.
+- Contactors (standard and changeover) with configurable pole count.
+- Lamps with configurable light color.
+- Multimeters that remain in the schematic.
+- Server-side simulation (Flask).
+- Save and load labs as JSON.
+- Wire bend points (add/drag/remove).
+- Manual canvas resize (saved in the lab).
+- Simulation debug log.
+- PLC component with LAD-text and live PLC debug.
+- UI language support (Swedish/English).
 
-## Krav
+## Requirements
 
 - Python 3.10+
 
-## Starta lokalt
+## Run locally
 
-Installera beroenden:
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Starta servern:
+Start the server:
 
 ```bash
 python app.py
 ```
 
-Öppna sedan:
+Open:
 
 ```
 http://127.0.0.1:5000
 ```
 
-## Användning
+## Usage
 
-- Välj verktyg: Markera, Ledning, Multimeter, Radera.
-- Lägg komponenter från biblioteket genom att klicka på komponenten och sedan klicka på canvas.
-- Dra ledningar mellan terminaler.
-- Lägg knäckpunkter på en ledning:
-  - Vid skapande: klicka på tom yta för att lägga knäckpunkter.
-  - I efterhand: dubbelklicka på en ledning för att skapa en ny knäckpunkt.
-  - Dra knäckpunkter för att justera. I radera‑läge kan de tas bort.
-- Starta simulering med `Kör simulering` och växla `Simläge`.
-- Multimeter: välj läge och klicka på komponent/terminaler.
-- Spara labb i panelen “Spara & ladda”.
-- Justera canvas‑storlek genom att dra i handtaget nere till höger.
+- Choose a tool: Select, Wire, Multimeter, Erase.
+- Add components from the library by clicking a component, then clicking the canvas.
+- Draw wires between terminals.
+- Add wire bend points:
+  - While drawing: click on empty canvas to add points.
+  - After drawing: double-click a wire to create a new bend point.
+  - Drag bend points to adjust. In Erase mode they can be removed.
+- Start simulation with `Run simulation` and toggle `Sim mode`.
+- Multimeter: choose a mode and click components/terminals.
+- Save labs in the “Save & load” panel.
+- Resize the canvas by dragging the handle in the lower-right corner.
 
 ## Timers
 
-Det finns två typer av timers:
+There are two timer types:
 
-- **Timer** (spolstyrd): När spolen får spänning börjar timern räkna ner. Efter fördröjningen växlar den kontakt (C/NO/NC). Du kan välja om den ska loopa eller bara gå en gång. Om spolen tappar matning återställs den till ursprungsläget.
-- **Timer (klocka)**: Styrs av datorns lokala tid. Du anger start‑ och stopptid (HH:MM) och den sluter/öppnar kontakten därefter.
+- **Timer (coil-driven)**: When the coil is energized the timer starts counting down. After the delay it switches its contact (C/NO/NC). You can choose loop or one-shot. If the coil loses power, it resets to its initial state.
+- **Timer (clock)**: Uses the computer’s local time. You set a start and stop time (HH:MM) and it opens/closes accordingly.
 
-Tips: I simläge uppdateras timers och visar återstående tid eller PÅ/AV som etikett.
+Tip: In simulation mode, timers update their labels (remaining time or ON/OFF).
 
-## PLC‑programmering (LAD‑text)
+## PLC programming (LAD text)
 
-PLC‑komponenten kan programmeras med enkel LAD‑text som liknar Siemens‑stil.
+The PLC component can be programmed with a simple LAD-style text format inspired by Siemens.
 
-### Adressering och kommentarer
+### Addressing and comments
 
-- Adresser är 1‑baserade: `I1..I64`, `Q1..Q64`, `M1..`, `T1..`, `C1..`.
-- Kommentarer kan skrivas med `;` (allt efter `;` ignoreras).
+- Addresses are 1-based: `I1..I64`, `Q1..Q64`, `M1..`, `T1..`, `C1..`.
+- Comments can be written with `;` (everything after `;` is ignored).
 
-### Grundinstruktioner
+### Instructions
 
-- `A I1` – AND med ingång I1
-- `AN I2` – AND NOT med ingång I2
-- `U I1` – AND (Siemens‑alias för A)
-- `UN I2` – AND NOT (Siemens‑alias för AN)
-- `O I3` – OR med ingång I3
-- `ON I4` – OR NOT med ingång I4
-- `= Q1` – Sätt utgång Q1 från aktuellt logikresultat
-- `= M1` – Sätt minnesbit M1 från aktuellt logikresultat
-- `S Q1` / `R Q1` – Set/Reset utgång
-- `S M1` / `R M1` – Set/Reset minne
-- `L I1` – Ladda operand i ackumulatorn
-- `T Q1` – Transferera ackumulatorn till Q1/M1
-- `MOVE I1 Q1` – Flytta värde från I1 till Q1/M1
-- `R_TRIG M1` – Positiv flank, skriver puls till M1 eller Q1
-- `F_TRIG M1` – Negativ flank, skriver puls till M1 eller Q1
-- `CTU C1 PV=5` – Räknare upp, Q blir sann vid PV
-- `CTD C1 PV=5` – Räknare ned, Q blir sann när CV <= 0
-- `R C1` – Reset räknare
-- `TON T1 2.5` – Fördröjd till (sekunder)
-- `TOF T1 2.5` – Fördröjd från (sekunder)
-- `TP T1 2.5` – Puls (sekunder)
+- `A I1` – AND with input I1
+- `AN I2` – AND NOT with input I2
+- `U I1` – AND (Siemens alias for A)
+- `UN I2` – AND NOT (Siemens alias for AN)
+- `O I3` – OR with input I3
+- `ON I4` – OR NOT with input I4
+- `= Q1` – Assign to output Q1 from current logic result
+- `= M1` – Assign to memory bit M1 from current logic result
+- `S Q1` / `R Q1` – Set/Reset output
+- `S M1` / `R M1` – Set/Reset memory
+- `L I1` – Load operand into accumulator
+- `T Q1` – Transfer accumulator to Q1/M1
+- `MOVE I1 Q1` – Move value from I1 to Q1/M1
+- `R_TRIG M1` – Rising edge, writes pulse to M1 or Q1
+- `F_TRIG M1` – Falling edge, writes pulse to M1 or Q1
+- `CTU C1 PV=5` – Count up, Q becomes true at PV
+- `CTD C1 PV=5` – Count down, Q becomes true when CV <= 0
+- `R C1` – Reset counter
+- `TON T1 2.5` – On-delay (seconds)
+- `TOF T1 2.5` – Off-delay (seconds)
+- `TP T1 2.5` – Pulse (seconds)
 
-### Exempel
+### Examples
 
 ```
 A I1
@@ -104,9 +105,9 @@ AN I2
 = Q1
 ```
 
-Tolkas som: Q1 blir sann när I1 är sann och I2 är falsk.
+Q1 is true when I1 is true and I2 is false.
 
-Exempel med timer:
+Timer example:
 
 ```
 A I1
@@ -114,9 +115,9 @@ TON T1 3.0
 = Q1
 ```
 
-Tolkas som: Q1 blir sann 3 sekunder efter att I1 blir sann.
+Q1 becomes true 3 seconds after I1 goes true.
 
-Exempel med minne (M‑bit):
+Memory example:
 
 ```
 A I1
@@ -126,7 +127,7 @@ A M1
 = Q1
 ```
 
-Exempel med räknare:
+Counter example:
 
 ```
 A I1
@@ -134,42 +135,43 @@ CTU C1 PV=3
 = Q1
 ```
 
-Q1 blir sann efter tre pulser på I1.
+Q1 becomes true after three pulses on I1.
 
-Exempel med MOVE:
+MOVE example:
 
 ```
 MOVE I1 Q1
 ```
 
-### PLC‑debug
+### PLC debug
 
-- Använd knappen **PLC‑debug** i egenskapspanelen för att se hur PLC:n “tänker”.
-- Debuggen visar varje rad, ACC‑värde och en sammanfattning av in/ut efter varje scan.
+- Use the **PLC debug** button in the properties panel to see how the PLC “thinks”.
+- The debug view shows each line, ACC value, and an input/output summary after each scan.
 
 ## Multimeter
 
-- **DC**: Volt, Ampere, Ohm
-- **AC**: Volt RMS, Ampere RMS, fasvinkel, P/Q/S och cos φ
+- **DC**: Voltage, Current, Resistance
+- **AC**: Voltage RMS, Current RMS, phase angle, P/Q/S and cos φ
 
-Placera multimetern genom att välja läge och klicka på komponent eller terminaler.
+Place the multimeter by selecting a mode and clicking a component or terminal.
 
-## Kontaktorer
+## Contactors
 
-- Standard (NO/NC per pol) och omkastande kontaktor.
-- Välj antal poler (1–6).
-- Spole A1/A2 styr när polerna växlar.
+- Standard (NO/NC per pole) and changeover contactor.
+- Choose pole count (1–6).
+- Coil A1/A2 drives the pole switching.
 
-## Struktur
+## Structure
 
-- `app.py` – Flask‑server, simulering och API.
-- `templates/index.html` – UI‑layout.
-- `static/js/app.js` – Klientlogik, canvas‑ritning.
-- `static/css/style.css` – Stil.
-- `saves/` – Sparade labbar som JSON.
+- `app.py` – Flask server, simulation and API.
+- `templates/index.html` – UI layout.
+- `static/js/app.js` – Client logic, canvas rendering.
+- `static/css/style.css` – Styling.
+- `static/i18n/` – UI translations.
+- `saves/` – Saved labs as JSON.
 
-## Notiser
+## Notes
 
-- Projektet är i ett tidigt skede och mycket är vibe‑kodat.
-- Simuleringen är avsedd för utbildning och visualisering, inte för verkliga elsystem.
-- AC‑simulering stöder en frekvens åt gången.
+- The project is at a very early stage and is heavily vibe-coded.
+- The simulation is meant for education and visualization, not real systems.
+- AC simulation supports a single frequency at a time.

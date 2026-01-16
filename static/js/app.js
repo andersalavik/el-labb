@@ -17,6 +17,7 @@ const saveList = document.getElementById("saveList");
 const canvasResizer = document.getElementById("canvasResizer");
 const debugLog = document.getElementById("debugLog");
 const debugClear = document.getElementById("debugClear");
+const languageSelect = document.getElementById("languageSelect");
 const plcModalBackdrop = document.getElementById("plcModalBackdrop");
 const plcModalText = document.getElementById("plcModalText");
 const plcModalSave = document.getElementById("plcModalSave");
@@ -34,6 +35,10 @@ const CONTACTOR_W = 120;
 const CONTACTOR_MIN_H = 70;
 const WIRE_LIVE_THRESHOLD = 0.5;
 const SIM_POLL_MS = 300;
+const DEFAULT_LANG = "sv";
+
+const i18nCache = {};
+let translations = {};
 
 const state = {
   components: [],
@@ -77,52 +82,53 @@ const state = {
   plcEditingId: null,
   plcPaused: false,
   plcDebugId: null,
+  language: DEFAULT_LANG,
 };
 
 const libraryGroups = [
   {
-    name: "Källor",
+    nameKey: "library.sources",
     items: [
       {
         id: "voltage_source",
         type: "voltage_source",
-        label: "Spänningskälla",
+        labelKey: "component.voltage_source",
         defaults: { value: 12, supplyType: "DC", frequency: 50, connection: "Y", neutral: true },
       },
-      { id: "ground", type: "ground", label: "Jord", defaults: {} },
+      { id: "ground", type: "ground", labelKey: "component.ground", defaults: {} },
     ],
   },
   {
-    name: "Last",
+    nameKey: "library.load",
     items: [
       {
         id: "lamp",
         type: "lamp",
-        label: "Lampa",
+        labelKey: "component.lamp",
         defaults: { value: 80, threshold: 6, ratedVoltage: 12, litColor: "#f6c453" },
       },
-      { id: "motor", type: "motor", label: "Motor", defaults: { value: 20, startVoltage: 6 } },
+      { id: "motor", type: "motor", labelKey: "component.motor", defaults: { value: 20, startVoltage: 6 } },
       {
         id: "motor_3ph",
         type: "motor_3ph",
-        label: "Motor 3-fas",
+        labelKey: "component.motor_3ph",
         defaults: { value: 12, startVoltage: 200, connection: "Y" },
       },
-      { id: "resistor", type: "resistor", label: "Resistor", defaults: { value: 100 } },
-      { id: "capacitor", type: "capacitor", label: "Kondensator", defaults: { value: 1e-6 } },
-      { id: "inductor", type: "inductor", label: "Induktor", defaults: { value: 0.1 } },
+      { id: "resistor", type: "resistor", labelKey: "component.resistor", defaults: { value: 100 } },
+      { id: "capacitor", type: "capacitor", labelKey: "component.capacitor", defaults: { value: 1e-6 } },
+      { id: "inductor", type: "inductor", labelKey: "component.inductor", defaults: { value: 0.1 } },
     ],
   },
   {
-    name: "Styrning",
+    nameKey: "library.control",
     items: [
-      { id: "switch", type: "switch", label: "Brytare", defaults: { closed: true } },
-      { id: "push_button", type: "push_button", label: "Tryckknapp", defaults: { closed: false } },
-      { id: "switch_spdt", type: "switch_spdt", label: "Trappbrytare", defaults: { position: "up" } },
+      { id: "switch", type: "switch", labelKey: "component.switch", defaults: { closed: true } },
+      { id: "push_button", type: "push_button", labelKey: "component.push_button", defaults: { closed: false } },
+      { id: "switch_spdt", type: "switch_spdt", labelKey: "component.switch_spdt", defaults: { position: "up" } },
       {
         id: "timer",
         type: "timer",
-        label: "Timer",
+        labelKey: "component.timer",
         defaults: {
           delayMs: 3000,
           pullInVoltage: 9,
@@ -135,13 +141,13 @@ const libraryGroups = [
       {
         id: "time_timer",
         type: "time_timer",
-        label: "Timer (klocka)",
+        labelKey: "component.time_timer",
         defaults: { startTime: "08:00", endTime: "17:00", timerState: {} },
       },
       {
         id: "plc",
         type: "plc",
-        label: "PLC",
+        labelKey: "component.plc",
         defaults: {
           inputs: 4,
           outputs: 4,
@@ -153,7 +159,7 @@ const libraryGroups = [
       {
         id: "contactor_standard",
         type: "contactor",
-        label: "Kontaktor",
+        labelKey: "component.contactor",
         defaults: {
           coilResistance: 120,
           pullInVoltage: 9,
@@ -165,7 +171,7 @@ const libraryGroups = [
       {
         id: "contactor_changeover",
         type: "contactor",
-        label: "Kontaktor omkastande",
+        labelKey: "component.contactor_changeover",
         defaults: {
           coilResistance: 120,
           pullInVoltage: 9,
@@ -177,8 +183,8 @@ const libraryGroups = [
     ],
   },
   {
-    name: "Noder",
-    items: [{ id: "node", type: "node", label: "Förgrening", defaults: {} }],
+    nameKey: "library.nodes",
+    items: [{ id: "node", type: "node", labelKey: "component.node", defaults: {} }],
   },
 ];
 
@@ -223,6 +229,24 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
+function getInitialLanguage() {
+  if (languageSelect && languageSelect.value) return languageSelect.value;
+  const stored = localStorage.getItem("language");
+  if (stored) return stored;
+  const nav = navigator.language || "";
+  return nav.toLowerCase().startsWith("sv") ? "sv" : "en";
+}
+
+if (languageSelect) {
+  languageSelect.addEventListener("change", () => {
+    const nextLang = languageSelect.value || DEFAULT_LANG;
+    localStorage.setItem("language", nextLang);
+    setLanguage(nextLang);
+  });
+}
+
+setLanguage(getInitialLanguage());
+
 function setCanvasSize(width, height) {
   if (!Number.isFinite(width) || !Number.isFinite(height)) return;
   const dpr = window.devicePixelRatio || 1;
@@ -248,14 +272,21 @@ function snap(value) {
 
 function updateSimToggle() {
   if (!simToggle) return;
-  simToggle.textContent = `Simläge: ${state.simRunning ? "På" : "Av"}`;
+  const status = state.simRunning ? t("common.on", "On") : t("common.off", "Off");
+  simToggle.textContent = `${t("sim.mode", "Sim mode")}: ${status}`;
+}
+
+function updateGridToggle() {
+  if (!gridToggle) return;
+  const status = state.showGrid ? t("common.on", "On") : t("common.off", "Off");
+  gridToggle.textContent = `${t("canvas.grid", "Grid")}: ${status}`;
 }
 
 function pauseSimulation() {
   if (!state.simRunning) return;
   state.simRunning = false;
   state.plcPaused = true;
-  simStatus.textContent = "Simulering pausad.";
+  simStatus.textContent = t("sim.paused", "Simulation paused.");
   clearSimSchedule();
   updateSimToggle();
 }
@@ -318,8 +349,59 @@ function updatePlcDebugText(comp) {
   if (Array.isArray(trace) && trace.length) {
     plcDebugText.textContent = trace.join("\n");
   } else {
-    plcDebugText.textContent = "Ingen PLC-debug tillgänglig ännu.";
+    plcDebugText.textContent = t("plc.debug.empty", "No PLC debug available yet.");
   }
+}
+
+async function loadTranslations(lang) {
+  if (i18nCache[lang]) return i18nCache[lang];
+  try {
+    const response = await fetch(`/static/i18n/${lang}.json`);
+    const payload = await response.json();
+    i18nCache[lang] = payload;
+    return payload;
+  } catch (error) {
+    i18nCache[lang] = {};
+    return {};
+  }
+}
+
+function t(key, fallback) {
+  return translations[key] || i18nCache[DEFAULT_LANG]?.[key] || fallback || key;
+}
+
+function applyTranslations() {
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    if (!key) return;
+    el.textContent = t(key, el.textContent);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (!key) return;
+    el.setAttribute("placeholder", t(key, el.getAttribute("placeholder") || ""));
+  });
+  document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-aria");
+    if (!key) return;
+    el.setAttribute("aria-label", t(key, el.getAttribute("aria-label") || ""));
+  });
+  updateSimToggle();
+  updateGridToggle();
+  buildLibrary();
+  updatePropsPanel();
+  renderSaveList();
+}
+
+async function setLanguage(lang) {
+  const nextLang = lang || DEFAULT_LANG;
+  translations = await loadTranslations(nextLang);
+  state.language = nextLang;
+  document.documentElement.lang = nextLang;
+  if (languageSelect) {
+    languageSelect.value = nextLang;
+  }
+  applyTranslations();
 }
 
 if (plcModalSave) {
@@ -505,7 +587,7 @@ function renderDebugLog() {
   if (!state.debugEntries.length) {
     const empty = document.createElement("div");
     empty.className = "muted";
-    empty.textContent = "Inga simuleringar ännu.";
+    empty.textContent = t("debug.empty", "No simulations yet.");
     debugLog.appendChild(empty);
     return;
   }
@@ -642,7 +724,7 @@ async function renderSaveList() {
     const payload = await fetchJSON("/api/saves");
     const saves = payload.saves || [];
     if (!saves.length) {
-      saveList.innerHTML = '<div class="muted">Inga sparade labbar ännu.</div>';
+      saveList.innerHTML = `<div class="muted">${t("save.empty", "No saved labs yet.")}</div>`;
       return;
     }
     saves.forEach((save) => {
@@ -651,14 +733,14 @@ async function renderSaveList() {
       const name = document.createElement("div");
       name.textContent = save.name;
       const load = document.createElement("button");
-      load.textContent = "Ladda";
+      load.textContent = t("save.load", "Load");
       load.addEventListener("click", async () => {
         const data = await fetchJSON(`/api/saves/${save.id}`);
         loadFromSnapshot(data.snapshot || {});
         if (state.simRunning) markDirty();
       });
       const remove = document.createElement("button");
-      remove.textContent = "Ta bort";
+      remove.textContent = t("save.remove", "Delete");
       remove.addEventListener("click", async () => {
         await fetchJSON(`/api/saves/${save.id}`, { method: "DELETE" });
         renderSaveList();
@@ -697,7 +779,7 @@ async function requestSimulation() {
   if (!state.simRunning || state.simPending) return;
   state.simPending = true;
   state.simDirty = false;
-  simStatus.textContent = "Simulerar...";
+  simStatus.textContent = t("sim.running", "Simulating...");
   try {
     const payload = await postJSON("/api/simulate", { ...serializeCircuit(), simTime: Date.now() });
     state.lastSolution = payload.solution || null;
@@ -744,51 +826,53 @@ async function requestSimulation() {
       .filter(([key]) => key.startsWith("__"))
       .map(([, value]) => value);
     const debugInfo = payload.debugInfo || {};
-    let summary = "Simulering uppdaterad.";
+    let summary = t("sim.updated", "Simulation updated.");
     let status = "ok";
     if (solveMessages.length) {
-      summary = `Delvis simulering: ${solveMessages[0]}`;
+      summary = `${t("sim.partial", "Partial simulation")}: ${solveMessages[0]}`;
       status = "partial";
     } else if (networkErrors.length) {
-      summary = `Simulering: ${networkErrors[0]}`;
+      summary = `${t("sim.network", "Simulation")}: ${networkErrors[0]}`;
       status = "error";
     } else if (faultMessages.length) {
-      summary = `Fel: ${faultMessages[0]}`;
+      summary = `${t("sim.fault", "Fault")}: ${faultMessages[0]}`;
       status = "fault";
     }
     simStatus.textContent = summary;
     const details = [];
     if (solveMessages.length) {
-      details.push(`Delvis fel: ${solveMessages.join("; ")}`);
+      details.push(`${t("sim.partial_errors", "Partial errors")}: ${solveMessages.join("; ")}`);
     }
     if (networkErrors.length) {
-      details.push(`Nätfel: ${networkErrors.join("; ")}`);
+      details.push(`${t("sim.network_errors", "Network errors")}: ${networkErrors.join("; ")}`);
     }
     if (faultMessages.length) {
-      details.push(`Komponentfel: ${faultMessages.join("; ")}`);
+      details.push(`${t("sim.component_faults", "Component faults")}: ${faultMessages.join("; ")}`);
     }
     if (debugInfo.dc && Object.keys(debugInfo.dc).length) {
       details.push(
-        `DC: noder=${debugInfo.dc.nodes}, källor=${debugInfo.dc.sources}, flytande=${debugInfo.dc.floating}, inaktiva=${debugInfo.dc.inactive || 0}, virtuell jord=${debugInfo.dc.virtualGround ? "ja" : "nej"}`
+        `DC: ${t("debug.nodes", "nodes")}=${debugInfo.dc.nodes}, ${t("debug.sources", "sources")}=${debugInfo.dc.sources}, ${t("debug.floating", "floating")}=${debugInfo.dc.floating}, ${t("debug.inactive", "inactive")}=${debugInfo.dc.inactive || 0}, ${t("debug.virtual_ground", "virtual ground")}=${debugInfo.dc.virtualGround ? t("common.yes", "yes") : t("common.no", "no")}`
       );
     }
     if (debugInfo.ac && Object.keys(debugInfo.ac).length) {
       details.push(
-        `AC: noder=${debugInfo.ac.nodes}, källor=${debugInfo.ac.sources}, flytande=${debugInfo.ac.floating}, inaktiva=${debugInfo.ac.inactive || 0}, virtuell jord=${debugInfo.ac.virtualGround ? "ja" : "nej"}`
+        `AC: ${t("debug.nodes", "nodes")}=${debugInfo.ac.nodes}, ${t("debug.sources", "sources")}=${debugInfo.ac.sources}, ${t("debug.floating", "floating")}=${debugInfo.ac.floating}, ${t("debug.inactive", "inactive")}=${debugInfo.ac.inactive || 0}, ${t("debug.virtual_ground", "virtual ground")}=${debugInfo.ac.virtualGround ? t("common.yes", "yes") : t("common.no", "no")}`
       );
     }
     if (!details.length) {
-      details.push(`Komponenter: ${state.components.length}, ledningar: ${state.wires.length}`);
+      details.push(
+        `${t("debug.components", "Components")}: ${state.components.length}, ${t("debug.wires", "wires")}: ${state.wires.length}`
+      );
     }
     addDebugEntry({ time: new Date(), status, summary, details });
   } catch (error) {
-    const summary = error.message || "Simulering misslyckades.";
+    const summary = error.message || t("sim.failed", "Simulation failed.");
     simStatus.textContent = summary;
     addDebugEntry({
       time: new Date(),
       status: "error",
       summary,
-      details: ["Kunde inte hämta svar från servern."],
+      details: [t("sim.fetch_failed", "Could not fetch response from server.")],
     });
   } finally {
     state.simPending = false;
@@ -807,7 +891,7 @@ async function requestMeasure(payload) {
     const result = await postJSON("/api/measure", { ...serializeCircuit(), ...payload });
     return result;
   } catch (error) {
-    return { error: error.message || "Mätning misslyckades." };
+    return { error: error.message || t("meter.failed", "Measurement failed.") };
   }
 }
 
@@ -1655,7 +1739,7 @@ function drawComponent(component) {
       ctx.fillStyle = lampColor;
       ctx.font = "10px Space Grotesk";
       ctx.textAlign = "center";
-      ctx.fillText("ON", 0, 30);
+      ctx.fillText(t("common.on", "On"), 0, 30);
       ctx.restore();
     }
   } else if (component.type === "timer") {
@@ -1729,7 +1813,11 @@ function drawComponent(component) {
     ctx.fillStyle = timerState.outputClosed ? "#2b6cb0" : "#6b6b72";
     ctx.font = "11px Space Grotesk";
     ctx.textAlign = "left";
-    ctx.fillText(timerState.outputClosed ? "PÅ" : "AV", component.x + 18, component.y + 18);
+    ctx.fillText(
+      timerState.outputClosed ? t("common.on", "On") : t("common.off", "Off"),
+      component.x + 18,
+      component.y + 18
+    );
     ctx.restore();
   }
 
@@ -2103,21 +2191,21 @@ function updatePropsPanel() {
       const wireLength = wire.length ?? state.wireDefaults.length;
       const wireMaterial = wire.material || state.wireDefaults.material;
       propsEl.innerHTML = `
-        <div><strong>Kabel</strong></div>
-        <label>Färg
+        <div><strong>${t("wire.title", "Wire")}</strong></div>
+        <label>${t("wire.color", "Color")}
           <input type="color" name="wireColor" value="${wireColor}" />
         </label>
-        <label>Area (mm²)
+        <label>${t("wire.area", "Area (mm²)")}
           <input type="number" step="0.1" name="wireArea" value="${wireArea}" />
         </label>
-        <label>Längd (m)
+        <label>${t("wire.length", "Length (m)")}
           <input type="number" step="0.1" name="wireLength" value="${wireLength}" />
         </label>`;
       propsEl.innerHTML += `
-        <label>Material
+        <label>${t("wire.material", "Material")}
           <select name="wireMaterial">
-            <option value="copper" ${wireMaterial === "copper" ? "selected" : ""}>Koppar</option>
-            <option value="aluminum" ${wireMaterial === "aluminum" ? "selected" : ""}>Aluminium</option>
+            <option value="copper" ${wireMaterial === "copper" ? "selected" : ""}>${t("material.copper", "Copper")}</option>
+            <option value="aluminum" ${wireMaterial === "aluminum" ? "selected" : ""}>${t("material.aluminum", "Aluminum")}</option>
           </select>
         </label>`;
       propsEl.querySelectorAll("input, select").forEach((input) => {
@@ -2134,21 +2222,21 @@ function updatePropsPanel() {
       return;
     }
     propsEl.innerHTML = `
-      <div><strong>Kabelstandard</strong></div>
-      <label>Färg
+      <div><strong>${t("wire.defaults", "Wire defaults")}</strong></div>
+      <label>${t("wire.color", "Color")}
         <input type="color" name="defaultWireColor" value="${state.wireDefaults.color}" />
       </label>
-      <label>Area (mm²)
+      <label>${t("wire.area", "Area (mm²)")}
         <input type="number" step="0.1" name="defaultWireArea" value="${state.wireDefaults.area}" />
       </label>
-      <label>Längd (m)
+      <label>${t("wire.length", "Length (m)")}
         <input type="number" step="0.1" name="defaultWireLength" value="${state.wireDefaults.length}" />
       </label>`;
     propsEl.innerHTML += `
-      <label>Material
+      <label>${t("wire.material", "Material")}
         <select name="defaultWireMaterial">
-          <option value="copper" ${state.wireDefaults.material === "copper" ? "selected" : ""}>Koppar</option>
-          <option value="aluminum" ${state.wireDefaults.material === "aluminum" ? "selected" : ""}>Aluminium</option>
+          <option value="copper" ${state.wireDefaults.material === "copper" ? "selected" : ""}>${t("material.copper", "Copper")}</option>
+          <option value="aluminum" ${state.wireDefaults.material === "aluminum" ? "selected" : ""}>${t("material.aluminum", "Aluminum")}</option>
         </select>
       </label>`;
     propsEl.querySelectorAll("input, select").forEach((input) => {
@@ -2164,9 +2252,10 @@ function updatePropsPanel() {
   }
   if (comp.rotation === undefined || comp.rotation === null) comp.rotation = 0;
 
-  let html = `<div><strong>${comp.type}</strong></div>`;
+  const compLabelKey = `component.${comp.type}`;
+  let html = `<div><strong>${t(compLabelKey, comp.type)}</strong></div>`;
   html += `
-    <label>Rotation
+    <label>${t("props.rotation", "Rotation")}
       <select name="rotation">
         <option value="0" ${comp.rotation === 0 ? "selected" : ""}>0°</option>
         <option value="90" ${comp.rotation === 90 ? "selected" : ""}>90°</option>
@@ -2176,66 +2265,66 @@ function updatePropsPanel() {
     </label>`;
   if ("value" in comp.props) {
     html += `
-      <label>Värde
+      <label>${t("props.value", "Value")}
         <input type="number" step="any" name="value" value="${comp.props.value}" />
       </label>`;
   }
   html += `
-    <label>Namn
+    <label>${t("props.name", "Name")}
       <input type="text" name="name" value="${comp.props.name || ""}" />
     </label>`;
   if (comp.type === "voltage_source") {
     html += `
-      <label>Typ
+      <label>${t("props.supply_type", "Type")}
         <select name="supplyType">
-          <option value="DC" ${comp.props.supplyType === "DC" ? "selected" : ""}>DC</option>
-          <option value="AC1" ${comp.props.supplyType === "AC1" ? "selected" : ""}>AC 1-fas</option>
-          <option value="AC3" ${comp.props.supplyType === "AC3" ? "selected" : ""}>AC 3-fas</option>
+          <option value="DC" ${comp.props.supplyType === "DC" ? "selected" : ""}>${t("supply.dc", "DC")}</option>
+          <option value="AC1" ${comp.props.supplyType === "AC1" ? "selected" : ""}>${t("supply.ac1", "AC 1-phase")}</option>
+          <option value="AC3" ${comp.props.supplyType === "AC3" ? "selected" : ""}>${t("supply.ac3", "AC 3-phase")}</option>
         </select>
       </label>`;
     if (comp.props.supplyType && comp.props.supplyType !== "DC") {
       html += `
-        <label>Frekvens (Hz)
+        <label>${t("props.frequency", "Frequency (Hz)")}
           <input type="number" step="1" name="frequency" value="${comp.props.frequency ?? 50}" />
         </label>`;
     }
     if (comp.props.supplyType === "AC3") {
       html += `
-        <label>Koppling
+        <label>${t("props.connection", "Connection")}
           <select name="connection">
-            <option value="Y" ${comp.props.connection === "Y" ? "selected" : ""}>Y (med N)</option>
-            <option value="Delta" ${comp.props.connection === "Delta" ? "selected" : ""}>Delta</option>
+            <option value="Y" ${comp.props.connection === "Y" ? "selected" : ""}>${t("connection.y", "Y (with N)")}</option>
+            <option value="Delta" ${comp.props.connection === "Delta" ? "selected" : ""}>${t("connection.delta", "Delta")}</option>
           </select>
         </label>`;
     }
   }
   if ("threshold" in comp.props) {
     html += `
-      <label>Tändspänning (V)
+      <label>${t("props.threshold", "Turn-on voltage (V)")}
         <input type="number" step="any" name="threshold" value="${comp.props.threshold}" />
       </label>`;
   }
   if ("ratedVoltage" in comp.props) {
     html += `
-      <label>Märkspänning (V)
+      <label>${t("props.rated_voltage", "Rated voltage (V)")}
         <input type="number" step="any" name="ratedVoltage" value="${comp.props.ratedVoltage}" />
       </label>`;
   }
   if (comp.type === "lamp") {
     html += `
-      <label>Ljusfärg
+      <label>${t("props.light_color", "Light color")}
         <input type="color" name="litColor" value="${comp.props.litColor || "#f6c453"}" />
       </label>`;
   }
   if ("startVoltage" in comp.props) {
     html += `
-      <label>Startspänning (V)
+      <label>${t("props.start_voltage", "Start voltage (V)")}
         <input type="number" step="any" name="startVoltage" value="${comp.props.startVoltage}" />
       </label>`;
   }
   if (comp.type === "motor_3ph") {
     html += `
-      <label>Koppling
+      <label>${t("props.connection", "Connection")}
         <select name="motor3phConnection">
           <option value="Y" ${comp.props.connection === "Y" ? "selected" : ""}>Y</option>
           <option value="Delta" ${comp.props.connection === "Delta" ? "selected" : ""}>Delta</option>
@@ -2244,36 +2333,36 @@ function updatePropsPanel() {
   }
   if (comp.type === "contactor") {
     html += `
-      <label>Spolresistans (Ω)
+      <label>${t("props.coil_resistance", "Coil resistance (Ω)")}
         <input type="number" step="any" name="coilResistance" value="${comp.props.coilResistance}" />
       </label>
-      <label>Inslagsspänning (V)
+      <label>${t("props.pull_in_voltage", "Pull-in voltage (V)")}
         <input type="number" step="any" name="pullInVoltage" value="${comp.props.pullInVoltage}" />
       </label>`;
     if ("coilRatedVoltage" in comp.props) {
       html += `
-        <label>Spol-märkspänning (V)
+        <label>${t("props.coil_rated_voltage", "Coil rated voltage (V)")}
           <input type="number" step="any" name="coilRatedVoltage" value="${comp.props.coilRatedVoltage}" />
         </label>`;
     }
     const closed = state.contactorStates[comp.id];
-    html += `<div class="muted">Status: ${closed ? "Stängd" : "Öppen"}</div>`;
+    html += `<div class="muted">${t("props.status", "Status")}: ${closed ? t("status.closed", "Closed") : t("status.open", "Open")}</div>`;
     const poleCount = Array.isArray(comp.props.poles) ? comp.props.poles.length : 1;
     html += `
-      <label>Typ
+      <label>${t("props.type", "Type")}
         <select name="contactType">
-          <option value="standard" ${comp.props.contactType === "standard" ? "selected" : ""}>Standard</option>
-          <option value="changeover" ${comp.props.contactType === "changeover" ? "selected" : ""}>Omkastande</option>
+          <option value="standard" ${comp.props.contactType === "standard" ? "selected" : ""}>${t("contactor.standard", "Standard")}</option>
+          <option value="changeover" ${comp.props.contactType === "changeover" ? "selected" : ""}>${t("contactor.changeover", "Changeover")}</option>
         </select>
       </label>
-      <label>Antal poler
+      <label>${t("props.pole_count", "Pole count")}
         <input type="number" min="1" max="6" step="1" name="poleCount" value="${poleCount}" />
       </label>`;
     if (comp.props.contactType !== "changeover" && Array.isArray(comp.props.poles)) {
-      html += `<div><strong>Poler</strong></div>`;
+      html += `<div><strong>${t("props.poles", "Poles")}</strong></div>`;
       comp.props.poles.forEach((pole, idx) => {
         html += `
-          <label>Pol ${idx + 1}
+          <label>${t("props.pole", "Pole")} ${idx + 1}
             <select name="pole_${idx}">
               <option value="NO" ${pole === "NO" ? "selected" : ""}>NO</option>
               <option value="NC" ${pole === "NC" ? "selected" : ""}>NC</option>
@@ -2291,82 +2380,82 @@ function updatePropsPanel() {
     }
     const remaining = Number.isFinite(remainingMs) ? (remainingMs / 1000).toFixed(1) : "-";
     html += `
-      <label>Spolresistans (Ω)
+      <label>${t("props.coil_resistance", "Coil resistance (Ω)")}
         <input type="number" step="any" name="coilResistance" value="${comp.props.coilResistance}" />
       </label>
-      <label>Inslagsspänning (V)
+      <label>${t("props.pull_in_voltage", "Pull-in voltage (V)")}
         <input type="number" step="any" name="pullInVoltage" value="${comp.props.pullInVoltage}" />
       </label>
-      <label>Fördröjning (s)
+      <label>${t("props.delay", "Delay (s)")}
         <input type="number" step="0.1" name="delaySeconds" value="${(comp.props.delayMs || 0) / 1000}" />
       </label>
-      <label>Loop
+      <label>${t("props.loop", "Loop")}
         <select name="timerLoop">
-          <option value="false" ${!comp.props.loop ? "selected" : ""}>Nej</option>
-          <option value="true" ${comp.props.loop ? "selected" : ""}>Ja</option>
+          <option value="false" ${!comp.props.loop ? "selected" : ""}>${t("common.no", "No")}</option>
+          <option value="true" ${comp.props.loop ? "selected" : ""}>${t("common.yes", "Yes")}</option>
         </select>
       </label>
-      <div class="muted">Status: ${timerState.outputClosed ? "Sluten" : "Öppen"}</div>
-      <div class="muted">Kvar: ${remaining}s</div>`;
+      <div class="muted">${t("props.status", "Status")}: ${timerState.outputClosed ? t("status.closed", "Closed") : t("status.open", "Open")}</div>
+      <div class="muted">${t("props.remaining", "Remaining")}: ${remaining}s</div>`;
   }
   if (comp.type === "time_timer") {
     const timerState = state.timerStates[comp.id] || comp.props.timerState || {};
     html += `
-      <label>Starttid
+      <label>${t("props.start_time", "Start time")}
         <input type="time" name="startTime" value="${comp.props.startTime || "08:00"}" />
       </label>
-      <label>Stopptid
+      <label>${t("props.end_time", "End time")}
         <input type="time" name="endTime" value="${comp.props.endTime || "17:00"}" />
       </label>
-      <div class="muted">Status: ${timerState.outputClosed ? "PÅ" : "AV"}</div>`;
+      <div class="muted">${t("props.status", "Status")}: ${timerState.outputClosed ? t("common.on", "On") : t("common.off", "Off")}</div>`;
   }
   if (comp.type === "plc") {
     html += `
-      <label>Språk
+      <label>${t("plc.language", "Language")}
         <select name="plcLanguage">
           <option value="LAD" ${comp.props.language === "LAD" ? "selected" : ""}>LAD</option>
-          <option value="ST" disabled>ST (kommer)</option>
+          <option value="ST" disabled>${t("plc.language_st", "ST (coming)")}</option>
         </select>
       </label>
-      <label>Antal ingångar
+      <label>${t("plc.inputs", "Inputs")}
         <input type="number" min="1" max="64" step="1" name="plcInputs" value="${comp.props.inputs}" />
       </label>
-      <label>Antal utgångar
+      <label>${t("plc.outputs", "Outputs")}
         <input type="number" min="1" max="64" step="1" name="plcOutputs" value="${comp.props.outputs}" />
       </label>
-      <label>Ingångströskel (V)
+      <label>${t("plc.threshold", "Input threshold (V)")}
         <input type="number" step="0.1" name="plcThreshold" value="${comp.props.inputThreshold || 9}" />
       </label>
-      <div class="muted">Program redigeras i popup.</div>
-      <button id="plcEditBtn">Redigera PLC-program</button>
-      <button id="plcDebugBtn" class="secondary">PLC-debug</button>`;
+      <div class="muted">${t("plc.editor_hint", "Program is edited in the popup.")}</div>
+      <button id="plcEditBtn">${t("plc.edit", "Edit PLC program")}</button>
+      <button id="plcDebugBtn" class="secondary">${t("plc.debug", "PLC debug")}</button>`;
   }
   if ("closed" in comp.props) {
     html += `
-      <label>Status
+      <label>${t("props.status", "Status")}
         <select name="closed">
-          <option value="true" ${comp.props.closed ? "selected" : ""}>Stängd</option>
-          <option value="false" ${!comp.props.closed ? "selected" : ""}>Öppen</option>
+          <option value="true" ${comp.props.closed ? "selected" : ""}>${t("status.closed", "Closed")}</option>
+          <option value="false" ${!comp.props.closed ? "selected" : ""}>${t("status.open", "Open")}</option>
         </select>
       </label>`;
   }
   if (comp.type === "switch_spdt") {
     html += `
-      <label>Läge
+      <label>${t("props.position", "Position")}
         <select name="position">
-          <option value="up" ${comp.props.position === "up" ? "selected" : ""}>Övre</option>
-          <option value="down" ${comp.props.position === "down" ? "selected" : ""}>Nedre</option>
+          <option value="up" ${comp.props.position === "up" ? "selected" : ""}>${t("position.up", "Up")}</option>
+          <option value="down" ${comp.props.position === "down" ? "selected" : ""}>${t("position.down", "Down")}</option>
         </select>
       </label>`;
   }
   if (comp.type === "push_button") {
-    html += `<div class="muted">Momentan: håll inne i simläge.</div>`;
+    html += `<div class="muted">${t("props.momentary_hint", "Momentary: hold in simulation mode.")}</div>`;
   }
   if (state.solveErrors[comp.id]) {
-    html += `<div class="muted">Fel: ${state.solveErrors[comp.id]}</div>`;
+    html += `<div class="muted">${t("props.error", "Error")}: ${state.solveErrors[comp.id]}</div>`;
   }
   if (state.faults[comp.id]) {
-    html += `<div class="muted">Fel: ${state.faults[comp.id]}</div>`;
+    html += `<div class="muted">${t("props.error", "Error")}: ${state.faults[comp.id]}</div>`;
   }
   propsEl.innerHTML = html;
 
@@ -2452,14 +2541,14 @@ function buildLibrary() {
   libraryGroups.forEach((group) => {
     const wrapper = document.createElement("details");
     wrapper.className = "library-group";
-    wrapper.open = group.name === "Källor";
+    wrapper.open = group.nameKey === "library.sources";
     const title = document.createElement("summary");
     title.className = "library-title";
-    title.textContent = group.name;
+    title.textContent = t(group.nameKey, group.nameKey);
     wrapper.appendChild(title);
     group.items.forEach((item) => {
       const btn = document.createElement("button");
-      btn.textContent = item.label;
+      btn.textContent = t(item.labelKey, item.labelKey);
       btn.addEventListener("click", () => {
         setActiveTool("select");
         state.placementType = item.id;
@@ -2484,7 +2573,7 @@ async function handleMeterClick(hit) {
   const mode = state.meter.mode;
   if (["current", "ac_current", "ac_power_p", "ac_power_q", "ac_power_s", "ac_pf"].includes(mode)) {
     if (!hit.component) {
-      meterReadout.textContent = "Välj en komponent";
+      meterReadout.textContent = t("meter.pick_component", "Select a component");
       return;
     }
     const unitMap = {
@@ -2842,7 +2931,7 @@ clearBtn.addEventListener("click", () => {
   state.draggingWirePoint = null;
   clearSimSchedule();
   meterReadout.textContent = "-";
-  simStatus.textContent = "Rensad.";
+  simStatus.textContent = t("sim.cleared", "Cleared.");
   updatePropsPanel();
   updateSimToggle();
   render();
@@ -2851,7 +2940,7 @@ clearBtn.addEventListener("click", () => {
 
 gridToggle.addEventListener("click", () => {
   state.showGrid = !state.showGrid;
-  gridToggle.textContent = `Rutnät: ${state.showGrid ? "På" : "Av"}`;
+  updateGridToggle();
   render();
 });
 
@@ -2861,7 +2950,7 @@ simToggle.addEventListener("click", () => {
     resetPlcRuntimeState();
     markDirty();
   } else {
-    simStatus.textContent = "Simulering pausad.";
+    simStatus.textContent = t("sim.paused", "Simulation paused.");
     clearSimSchedule();
   }
   state.simRunning = nextState;
@@ -2918,7 +3007,7 @@ saveBtn.addEventListener("click", async () => {
   try {
     await saveCurrent(name);
   } catch (error) {
-    simStatus.textContent = error.message || "Kunde inte spara.";
+    simStatus.textContent = error.message || t("save.failed", "Could not save.");
   }
 });
 
@@ -2930,7 +3019,7 @@ if (saveNameInput) {
       try {
         await saveCurrent(name);
       } catch (error) {
-        simStatus.textContent = error.message || "Kunde inte spara.";
+        simStatus.textContent = error.message || t("save.failed", "Could not save.");
       }
     }
   });
