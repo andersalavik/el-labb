@@ -172,7 +172,7 @@
             ],
             "trig": {}
           },
-          "program": "; ==========================================\n; 2-v\u00e4gs Trafikljus (Sverige korrekt + loop)\n; A: Q1=R\u00f6d Q2=Gul Q3=Gr\u00f6n\n; B: Q4=R\u00f6d Q5=Gul Q6=Gr\u00f6n\n; ==========================================\n\n; Steg (anv\u00e4nder M21..M28)\n; M21 = A_R\u00d6D_GUL\n; M22 = A_GR\u00d6N\n; M23 = A_GUL\n; M24 = ALL_R\u00d6TT_1\n; M25 = B_R\u00d6D_GUL\n; M26 = B_GR\u00d6N\n; M27 = B_GUL\n; M28 = ALL_R\u00d6TT_2\n\n; --- STARTINIT: om inget steg \u00e4r aktivt, starta i ALL-R\u00d6TT_2 ---\nA M21\nO M22\nO M23\nO M24\nO M25\nO M26\nO M27\nO M28\n= M90\n\nAN M90\nS M28\n\n\n; --- A R\u00d6D+GUL 1s ---\nA M21\nTON T21 1.0\n= M91\n\nA M91\nR M21\nS M22\n\n\n; --- A GR\u00d6N 5s ---\nA M22\nTON T22 5.0\n= M92\n\nA M92\nR M22\nS M23\n\n\n; --- A GUL 1s ---\nA M23\nTON T23 1.0\n= M93\n\nA M93\nR M23\nS M24\n\n\n; --- ALL-R\u00d6TT 1s (innan B f\u00e5r r\u00f6d+gul) ---\nA M24\nTON T24 1.0\n= M94\n\nA M94\nR M24\nS M25\n\n\n; --- B R\u00d6D+GUL 1s ---\nA M25\nTON T25 1.0\n= M95\n\nA M95\nR M25\nS M26\n\n\n; --- B GR\u00d6N 5s ---\nA M26\nTON T26 5.0\n= M96\n\nA M96\nR M26\nS M27\n\n\n; --- B GUL 1s ---\nA M27\nTON T27 1.0\n= M97\n\nA M97\nR M27\nS M28\n\n\n; --- ALL-R\u00d6TT 1s (innan A f\u00e5r r\u00f6d+gul) ---\nA M28\nTON T28 1.0\n= M98\n\nA M98\nR M28\nS M21\n\n\n; ==========================================\n; UTG\u00c5NGAR (tydligt: r\u00f6d+gul = b\u00e5da t\u00e4nda)\n; ==========================================\n\n; --- A ---\n; A GR\u00d6N bara i M22\nA M22\n= Q3\n\n; A GUL i M21 (r\u00f6d+gul) eller M23 (gul)\nA M21\nO M23\n= Q2\n\n; A R\u00d6D i M21 + ALLA steg d\u00e4r A ska st\u00e5 r\u00f6tt (B-fasen + all-r\u00f6tt)\n; (R\u00f6d ska INTE vara t\u00e4nd i M22/M23)\nA M21\nO M24\nO M25\nO M26\nO M27\nO M28\n= Q1\n\n\n; --- B ---\n; B GR\u00d6N bara i M26\nA M26\n= Q6\n\n; B GUL i M25 (r\u00f6d+gul) eller M27 (gul)\nA M25\nO M27\n= Q5\n\n; B R\u00d6D i M25 + ALLA steg d\u00e4r B ska st\u00e5 r\u00f6tt (A-fasen + all-r\u00f6tt)\n; (R\u00f6d ska INTE vara t\u00e4nd i M26/M27)\nA M25\nO M21\nO M22\nO M23\nO M24\nO M28\n= Q4"
+          "program": "; ==========================================\n; 2-vägs Trafikljus (Sverige korrekt + loop)\n; A: Q1=Röd Q2=Gul Q3=Grön\n; B: Q4=Röd Q5=Gul Q6=Grön\n; ==========================================\n\n; Steg (använder M21..M28)\n; M21 = A_RÖD_GUL\n; M22 = A_GRÖN\n; M23 = A_GUL\n; M24 = ALL_RÖTT_1\n; M25 = B_RÖD_GUL\n; M26 = B_GRÖN\n; M27 = B_GUL\n; M28 = ALL_RÖTT_2\n\n; --- STARTINIT: om inget steg är aktivt, starta i ALL-RÖTT_2 ---\nA M21\nO M22\nO M23\nO M24\nO M25\nO M26\nO M27\nO M28\n= M90\n\nAN M90\nS M28\n\n\n; --- A RÖD+GUL 1s ---\nA M21\nTON T21 1.0\n= M91\n\nA M91\nR M21\nS M22\n\n\n; --- A GRÖN 5s ---\nA M22\nTON T22 5.0\n= M92\n\nA M92\nR M22\nS M23\n\n\n; --- A GUL 1s ---\nA M23\nTON T23 1.0\n= M93\n\nA M93\nR M23\nS M24\n\n\n; --- ALL-RÖTT 1s (innan B får röd+gul) ---\nA M24\nTON T24 1.0\n= M94\n\nA M94\nR M24\nS M25\n\n\n; --- B RÖD+GUL 1s ---\nA M25\nTON T25 1.0\n= M95\n\nA M95\nR M25\nS M26\n\n\n; --- B GRÖN 5s ---\nA M26\nTON T26 5.0\n= M96\n\nA M96\nR M26\nS M27\n\n\n; --- B GUL 1s ---\nA M27\nTON T27 1.0\n= M97\n\nA M97\nR M27\nS M28\n\n\n; --- ALL-RÖTT 1s (innan A får röd+gul) ---\nA M28\nTON T28 1.0\n= M98\n\nA M98\nR M28\nS M21\n\n\n; ==========================================\n; UTGÅNGAR (tydligt: röd+gul = båda tända)\n; ==========================================\n\n; --- A ---\n; A GRÖN bara i M22\nA M22\n= Q3\n\n; A GUL i M21 (röd+gul) eller M23 (gul)\nA M21\nO M23\n= Q2\n\n; A RÖD i M21 + ALLA steg där A ska stå rött (B-fasen + all-rött)\n; (Röd ska INTE vara tänd i M22/M23)\nA M21\nO M24\nO M25\nO M26\nO M27\nO M28\n= Q1\n\n\n; --- B ---\n; B GRÖN bara i M26\nA M26\n= Q6\n\n; B GUL i M25 (röd+gul) eller M27 (gul)\nA M25\nO M27\n= Q5\n\n; B RÖD i M25 + ALLA steg där B ska stå rött (A-fasen + all-rött)\n; (Röd ska INTE vara tänd i M26/M27)\nA M25\nO M21\nO M22\nO M23\nO M24\nO M28\n= Q4"
         },
         "rotation": 0,
         "type": "plc",
@@ -393,7 +393,7 @@
             "y": 40
           },
           {
-            "x": 200,
+            "x": 200.0,
             "y": 40
           }
         ],
@@ -446,11 +446,11 @@
         "material": "copper",
         "points": [
           {
-            "x": 860,
+            "x": 860.0,
             "y": 620
           },
           {
-            "x": 200,
+            "x": 200.0,
             "y": 620
           }
         ],
@@ -553,11 +553,11 @@
         "material": "copper",
         "points": [
           {
-            "x": 1240,
+            "x": 1240.0,
             "y": 620
           },
           {
-            "x": 200,
+            "x": 200.0,
             "y": 620
           }
         ],
@@ -604,7 +604,7 @@
           },
           {
             "x": 720,
-            "y": 220
+            "y": 220.0
           }
         ],
         "to": {

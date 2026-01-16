@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -20 80 40">
+  <g fill="none" stroke="#2f2f34" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="-40" y1="0" x2="-18" y2="0" />
+    <line x1="18" y1="0" x2="40" y2="0" />
+    <circle cx="0" cy="0" r="18" />
+  </g>
+  <text x="0" y="4" font-size="12" text-anchor="middle" fill="#2f2f34" font-family="Space Grotesk, sans-serif">M</text>
+</svg>

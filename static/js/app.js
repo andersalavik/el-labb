@@ -39,6 +39,7 @@ const DEFAULT_LANG = "sv";
 
 const i18nCache = {};
 let translations = {};
+let symbolsReady = false;
 
 const state = {
   components: [],
@@ -83,6 +84,8 @@ const state = {
   plcPaused: false,
   plcDebugId: null,
   language: DEFAULT_LANG,
+  symbolDefs: null,
+  symbolImages: {},
 };
 
 const libraryGroups = [
@@ -229,6 +232,68 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
+async function loadSymbols() {
+  try {
+    const response = await fetch("/static/symbols/defs.json");
+    const defs = await response.json();
+    const images = {};
+    const loadImage = (file) =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = `/static/symbols/${file}`;
+      });
+    for (const [key, def] of Object.entries(defs)) {
+      images[key] = {};
+      const files = def.files || (def.file ? { default: def.file } : {});
+      for (const [variant, file] of Object.entries(files)) {
+        images[key][variant] = await loadImage(file);
+      }
+    }
+    state.symbolDefs = defs;
+    state.symbolImages = images;
+    symbolsReady = true;
+    render();
+  } catch (error) {
+    symbolsReady = false;
+  }
+}
+
+function getSymbolTerminals(component) {
+  if (!state.symbolDefs) return null;
+  const def = state.symbolDefs[component.type];
+  if (!def || !Array.isArray(def.terminals)) return null;
+  const { w, h } = getComponentSizeUnrotated(component);
+  return def.terminals.map((t) =>
+    applyRotation(component, { x: t.x * w, y: t.y * h })
+  );
+}
+
+function resolveSymbolKey(component) {
+  const def = state.symbolDefs?.[component.type];
+  if (!def || !def.files) return "default";
+  if (component.type === "switch" || component.type === "push_button") {
+    return component.props.closed ? "closed" : "open";
+  }
+  if (component.type === "switch_spdt") {
+    return component.props.position === "down" ? "down" : "up";
+  }
+  return "default";
+}
+
+function drawSymbol(component) {
+  if (!symbolsReady) return false;
+  const images = state.symbolImages[component.type];
+  if (!images) return false;
+  const key = resolveSymbolKey(component);
+  const img = images[key] || images.default;
+  if (!img) return false;
+  const { w, h } = getComponentSizeUnrotated(component);
+  ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  return true;
+}
+
 function getInitialLanguage() {
   if (languageSelect && languageSelect.value) return languageSelect.value;
   const stored = localStorage.getItem("language");
@@ -246,6 +311,7 @@ if (languageSelect) {
 }
 
 setLanguage(getInitialLanguage());
+loadSymbols();
 
 function setCanvasSize(width, height) {
   if (!Number.isFinite(width) || !Number.isFinite(height)) return;
@@ -1030,6 +1096,22 @@ function getComponentSize(component) {
   return { w, h };
 }
 
+function getComponentSizeUnrotated(component) {
+  let w = component.type === "node" ? 20 : COMPONENT_W;
+  let h = component.type === "node" ? 20 : COMPONENT_H;
+  if (component.type === "contactor") {
+    const layout = getContactorLayout(component);
+    w = layout.width;
+    h = layout.height;
+  }
+  if (component.type === "plc") {
+    const layout = getPlcLayout(component);
+    w = layout.width;
+    h = layout.height;
+  }
+  return { w, h };
+}
+
 function addComponent(type, x, y) {
   const def = libraryItems.get(type);
   if (!def) return;
@@ -1053,6 +1135,8 @@ function addComponent(type, x, y) {
 }
 
 function getTerminals(component) {
+  const symbolTerminals = getSymbolTerminals(component);
+  if (symbolTerminals) return symbolTerminals;
   let base = [];
   switch (component.type) {
     case "motor_3ph":
@@ -1495,7 +1579,9 @@ function drawComponent(component) {
   ctx.strokeStyle = isSelected ? "#e76f51" : "#2f2f34";
   ctx.lineWidth = 2;
 
-  if (component.type === "ground") {
+  const symbolDrawn = drawSymbol(component);
+
+  if (!symbolDrawn && component.type === "ground") {
     ctx.beginPath();
     ctx.moveTo(0, -16);
     ctx.lineTo(0, 0);
@@ -1511,20 +1597,19 @@ function drawComponent(component) {
     ctx.arc(0, 0, 6, 0, Math.PI * 2);
     ctx.fillStyle = "#2f2f34";
     ctx.fill();
-  } else if (component.type === "resistor") {
+  } else if (!symbolDrawn && component.type === "resistor") {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     ctx.beginPath();
     ctx.moveTo(left, 0);
-    ctx.lineTo(left + 10, 0);
-    ctx.lineTo(left + 20, -8);
-    ctx.lineTo(left + 30, 8);
-    ctx.lineTo(left + 40, -8);
-    ctx.lineTo(left + 50, 8);
-    ctx.lineTo(left + 60, 0);
+    ctx.lineTo(-18, 0);
+    ctx.moveTo(18, 0);
     ctx.lineTo(right, 0);
     ctx.stroke();
-  } else if (component.type === "capacitor") {
+    ctx.beginPath();
+    ctx.rect(-18, -8, 36, 16);
+    ctx.stroke();
+  } else if (!symbolDrawn && component.type === "capacitor") {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     ctx.beginPath();
@@ -1537,67 +1622,73 @@ function drawComponent(component) {
     ctx.moveTo(8, 0);
     ctx.lineTo(right, 0);
     ctx.stroke();
-  } else if (component.type === "inductor") {
+  } else if (!symbolDrawn && component.type === "inductor") {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     ctx.beginPath();
     ctx.moveTo(left, 0);
-    ctx.lineTo(left + 10, 0);
+    ctx.lineTo(-22, 0);
     for (let i = 0; i < 4; i += 1) {
-      ctx.arc(left + 20 + i * 12, 0, 6, Math.PI, 0);
+      ctx.arc(-16 + i * 10, 0, 5, Math.PI, 0);
     }
     ctx.lineTo(right, 0);
     ctx.stroke();
-  } else if (component.type === "switch") {
+  } else if (!symbolDrawn && component.type === "switch") {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     ctx.beginPath();
     ctx.moveTo(left, 0);
-    ctx.lineTo(-10, 0);
-    if (component.props.closed) {
-      ctx.lineTo(10, 0);
-    } else {
-      ctx.lineTo(8, -10);
-    }
+    ctx.lineTo(-14, 0);
+    ctx.moveTo(14, 0);
     ctx.lineTo(right, 0);
+    if (component.props.closed) {
+      ctx.moveTo(-14, 0);
+      ctx.lineTo(14, 0);
+    } else {
+      ctx.moveTo(-14, 0);
+      ctx.lineTo(12, -10);
+    }
     ctx.stroke();
-  } else if (component.type === "push_button") {
+  } else if (!symbolDrawn && component.type === "push_button") {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     ctx.beginPath();
     ctx.moveTo(left, 0);
-    ctx.lineTo(-12, 0);
-    if (component.props.closed) {
-      ctx.lineTo(12, 0);
-    } else {
-      ctx.lineTo(10, -10);
-    }
+    ctx.lineTo(-14, 0);
+    ctx.moveTo(14, 0);
     ctx.lineTo(right, 0);
+    if (component.props.closed) {
+      ctx.moveTo(-14, 0);
+      ctx.lineTo(14, 0);
+    } else {
+      ctx.moveTo(-14, 0);
+      ctx.lineTo(12, -10);
+    }
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(0, -6);
-    ctx.lineTo(0, -20);
+    ctx.moveTo(0, -4);
+    ctx.lineTo(0, -22);
     ctx.stroke();
-  } else if (component.type === "switch_spdt") {
+  } else if (!symbolDrawn && component.type === "switch_spdt") {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     const position = component.props.position || "up";
     ctx.beginPath();
     ctx.moveTo(left, 0);
-    ctx.lineTo(-12, 0);
+    ctx.lineTo(-14, 0);
     if (position === "up") {
-      ctx.lineTo(10, -10);
+      ctx.lineTo(12, -12);
     } else {
-      ctx.lineTo(10, 10);
+      ctx.lineTo(12, 12);
     }
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(10, -12);
+    ctx.moveTo(14, -12);
     ctx.lineTo(right, -12);
-    ctx.moveTo(10, 12);
+    ctx.moveTo(14, 12);
     ctx.lineTo(right, 12);
     ctx.stroke();
-  } else if (component.type === "voltage_source") {
+  } else if (!symbolDrawn && component.type === "voltage_source") {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     ctx.beginPath();
@@ -1618,7 +1709,7 @@ function drawComponent(component) {
     ctx.font = "10px Space Grotesk";
     ctx.textAlign = "center";
     ctx.fillText(component.props.supplyType || "DC", 0, 24);
-  } else if (component.type === "motor") {
+  } else if (!symbolDrawn && component.type === "motor") {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     ctx.beginPath();
@@ -1652,7 +1743,7 @@ function drawComponent(component) {
     ctx.font = "12px Space Grotesk";
     ctx.textAlign = "center";
     ctx.fillText("M", 0, 4);
-  } else if (component.type === "motor_3ph") {
+  } else if (!symbolDrawn && component.type === "motor_3ph") {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     ctx.beginPath();
@@ -1693,7 +1784,9 @@ function drawComponent(component) {
     ctx.font = "11px Space Grotesk";
     ctx.textAlign = "center";
     ctx.fillText("M3", 0, 4);
-  } else if (component.type === "lamp") {
+    ctx.font = "10px Space Grotesk";
+    ctx.fillText("3~", 0, 18);
+  } else if (!symbolDrawn && component.type === "lamp") {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     ctx.beginPath();
@@ -1707,15 +1800,7 @@ function drawComponent(component) {
     const rgb = hexToRgb(lampColor);
     ctx.beginPath();
     ctx.arc(0, 0, 18, 0, Math.PI * 2);
-    if (lit) {
-      ctx.save();
-      ctx.strokeStyle = lampColor;
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.restore();
-    } else {
-      ctx.stroke();
-    }
+    ctx.stroke();
     if (lit) {
       const pulse = state.simRunning ? 0.5 + 0.5 * Math.sin(state.animTime * 6) : 0.5;
       ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.45 + 0.35 * pulse})`;
@@ -1742,11 +1827,11 @@ function drawComponent(component) {
       ctx.fillText(t("common.on", "On"), 0, 30);
       ctx.restore();
     }
-  } else if (component.type === "timer") {
+  } else if (!symbolDrawn && component.type === "timer") {
     drawTimerSymbol(component);
-  } else if (component.type === "time_timer") {
+  } else if (!symbolDrawn && component.type === "time_timer") {
     drawTimeTimerSymbol(component);
-  } else if (component.type === "plc") {
+  } else if (!symbolDrawn && component.type === "plc") {
     const layout = getPlcLayout(component);
     ctx.beginPath();
     ctx.rect(-layout.width / 2, -layout.height / 2, layout.width, layout.height);
@@ -1759,9 +1844,9 @@ function drawComponent(component) {
     ctx.font = "10px Space Grotesk";
     ctx.fillText(`${component.props.language || "LAD"}`, 0, -layout.height / 2 + 28);
     ctx.restore();
-  } else if (component.type === "contactor") {
+  } else if (!symbolDrawn && component.type === "contactor") {
     drawContactorSymbol(component);
-  } else {
+  } else if (!symbolDrawn) {
     const left = -COMPONENT_W / 2;
     const right = COMPONENT_W / 2;
     ctx.beginPath();
@@ -1772,6 +1857,67 @@ function drawComponent(component) {
     ctx.beginPath();
     ctx.rect(-20, -12, 40, 24);
     ctx.stroke();
+  }
+
+  if (symbolDrawn) {
+    if (component.type === "lamp") {
+      const lit = isLampLit(component);
+      if (lit) {
+        const lampColor = component.props.litColor || "#f6c453";
+        const rgb = hexToRgb(lampColor);
+        const pulse = state.simRunning ? 0.5 + 0.5 * Math.sin(state.animTime * 6) : 0.5;
+        ctx.save();
+        ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.45 + 0.35 * pulse})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`;
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(0, 0, 24, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+    if (component.type === "motor") {
+      const running = isMotorRunning(component);
+      if (running) {
+        const pulse = state.simRunning ? 0.5 + 0.5 * Math.sin(state.animTime * 8) : 0.5;
+        ctx.save();
+        ctx.strokeStyle = `rgba(90, 167, 255, ${0.3 + 0.3 * pulse})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 24, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+    if (component.type === "motor_3ph") {
+      const dir = state.motor3phDirection[component.id] || "stopped";
+      if (dir !== "stopped") {
+        const pulse = state.simRunning ? 0.5 + 0.5 * Math.sin(state.animTime * 8) : 0.5;
+        ctx.save();
+        ctx.strokeStyle = `rgba(90, 167, 255, ${0.35 + 0.35 * pulse})`;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, 24, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        ctx.save();
+        ctx.strokeStyle = "#5aa7ff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (dir === "cw") {
+          ctx.arc(0, 0, 12, 0.3 * Math.PI, 1.6 * Math.PI);
+          ctx.lineTo(10, -6);
+        } else {
+          ctx.arc(0, 0, 12, 1.7 * Math.PI, 0.4 * Math.PI);
+          ctx.lineTo(-10, -6);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
   }
 
   ctx.fillStyle = "#2f2f34";

@@ -1,0 +1,76 @@
+{
+  "switch": {
+    "files": {
+      "open": "switch_open.svg",
+      "closed": "switch_closed.svg"
+    },
+    "terminals": [
+      {"x": -0.5, "y": 0},
+      {"x": 0.5, "y": 0}
+    ]
+  },
+  "push_button": {
+    "files": {
+      "open": "push_button_open.svg",
+      "closed": "push_button_closed.svg"
+    },
+    "terminals": [
+      {"x": -0.5, "y": 0},
+      {"x": 0.5, "y": 0}
+    ]
+  },
+  "switch_spdt": {
+    "files": {
+      "up": "switch_spdt_up.svg",
+      "down": "switch_spdt_down.svg"
+    },
+    "terminals": [
+      {"x": -0.5, "y": 0},
+      {"x": 0.5, "y": -0.3},
+      {"x": 0.5, "y": 0.3}
+    ]
+  },
+  "resistor": {
+    "file": "resistor.svg",
+    "terminals": [
+      {"x": -0.5, "y": 0},
+      {"x": 0.5, "y": 0}
+    ]
+  },
+  "capacitor": {
+    "file": "capacitor.svg",
+    "terminals": [
+      {"x": -0.5, "y": 0},
+      {"x": 0.5, "y": 0}
+    ]
+  },
+  "inductor": {
+    "file": "inductor.svg",
+    "terminals": [
+      {"x": -0.5, "y": 0},
+      {"x": 0.5, "y": 0}
+    ]
+  },
+  "lamp": {
+    "file": "lamp.svg",
+    "terminals": [
+      {"x": -0.5, "y": 0},
+      {"x": 0.5, "y": 0}
+    ]
+  },
+  "motor": {
+    "file": "motor.svg",
+    "terminals": [
+      {"x": -0.5, "y": 0},
+      {"x": 0.5, "y": 0}
+    ]
+  },
+  "motor_3ph": {
+    "file": "motor_3ph.svg",
+    "terminals": [
+      {"x": -0.5, "y": -0.3},
+      {"x": 0.5, "y": 0},
+      {"x": -0.5, "y": 0.3}
+    ]
+  }
+}
