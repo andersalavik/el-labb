@@ -163,7 +163,9 @@ Place the multimeter by selecting a mode and clicking a component or terminal.
 
 ## Structure
 
-- `app.py` – Flask server, simulation and API.
+- `app.py` – Flask app bootstrap.
+- `api/` – Flask routes and save/load helpers.
+- `sim/` – Simulation engine, MNA solvers, PLC logic.
 - `templates/index.html` – UI layout.
 - `static/js/app.js` – Client logic, canvas rendering.
 - `static/css/style.css` – Styling.
