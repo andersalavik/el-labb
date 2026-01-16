@@ -44,6 +44,7 @@ const state = {
   simPending: false,
   canvasSize: null,
   canvasResizing: null,
+  simTimerId: null,
   meter: {
     mode: "voltage",
     picks: [],
@@ -55,6 +56,7 @@ const state = {
   lampLit: {},
   motorRunning: {},
   motor3phDirection: {},
+  timerStates: {},
   faults: {},
   solveErrors: {},
   wireDefaults: { color: "#2f2f34", area: 1.5, length: 1, material: "copper" },
@@ -101,6 +103,25 @@ const libraryGroups = [
       { id: "switch", type: "switch", label: "Brytare", defaults: { closed: true } },
       { id: "push_button", type: "push_button", label: "Tryckknapp", defaults: { closed: false } },
       { id: "switch_spdt", type: "switch_spdt", label: "Trappbrytare", defaults: { position: "up" } },
+      {
+        id: "timer",
+        type: "timer",
+        label: "Timer",
+        defaults: {
+          delayMs: 3000,
+          pullInVoltage: 9,
+          coilResistance: 120,
+          loop: false,
+          initialClosed: false,
+          timerState: {},
+        },
+      },
+      {
+        id: "time_timer",
+        type: "time_timer",
+        label: "Timer (klocka)",
+        defaults: { startTime: "08:00", endTime: "17:00", timerState: {} },
+      },
       {
         id: "contactor_standard",
         type: "contactor",
@@ -152,6 +173,8 @@ const componentLabels = {
   motor_3ph: "M3",
   lamp: "L",
   contactor: "K",
+  timer: "T",
+  time_timer: "TT",
   node: "N",
   ground: "GND",
 };
@@ -197,6 +220,71 @@ function snap(value) {
 function updateSimToggle() {
   if (!simToggle) return;
   simToggle.textContent = `Simläge: ${state.simRunning ? "På" : "Av"}`;
+}
+
+function clearSimSchedule() {
+  if (state.simTimerId) {
+    clearTimeout(state.simTimerId);
+    state.simTimerId = null;
+  }
+}
+
+function parseTimeToMinutes(value, fallbackMinutes) {
+  if (!value || typeof value !== "string" || !value.includes(":")) return fallbackMinutes;
+  const [hh, mm] = value.split(":").map((part) => Number(part));
+  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return fallbackMinutes;
+  if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return fallbackMinutes;
+  return hh * 60 + mm;
+}
+
+function getNextBoundaryDelay(startTime, endTime) {
+  const now = new Date();
+  const startMinutes = parseTimeToMinutes(startTime, 8 * 60);
+  const endMinutes = parseTimeToMinutes(endTime, 17 * 60);
+  if (startMinutes === endMinutes) return null;
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const active =
+    endMinutes > startMinutes
+      ? currentMinutes >= startMinutes && currentMinutes < endMinutes
+      : currentMinutes >= startMinutes || currentMinutes < endMinutes;
+  const targetMinutes = active ? endMinutes : startMinutes;
+
+  const target = new Date(now);
+  target.setHours(Math.floor(targetMinutes / 60), targetMinutes % 60, 0, 0);
+  if (target.getTime() <= now.getTime()) {
+    target.setDate(target.getDate() + 1);
+  }
+  return target.getTime() - now.getTime();
+}
+
+function scheduleNextSimulation() {
+  clearSimSchedule();
+  if (!state.simRunning) return;
+  let nextDelay = Infinity;
+
+  state.components.forEach((comp) => {
+    if (comp.type === "timer") {
+      const timerState = state.timerStates[comp.id] || {};
+      if (timerState.running && Number.isFinite(timerState.startAt)) {
+        const delayMs = comp.props.delayMs || 0;
+        const remaining = Math.max(0, delayMs - (Date.now() - timerState.startAt));
+        if (remaining > 0) nextDelay = Math.min(nextDelay, remaining);
+      }
+    }
+    if (comp.type === "time_timer") {
+      const delay = getNextBoundaryDelay(comp.props.startTime, comp.props.endTime);
+      if (delay !== null) nextDelay = Math.min(nextDelay, delay);
+    }
+  });
+
+  if (!Number.isFinite(nextDelay) || nextDelay <= 0) return;
+  const delay = Math.max(150, Math.min(nextDelay + 50, 24 * 60 * 60 * 1000));
+  state.simTimerId = setTimeout(() => {
+    if (state.simRunning) {
+      requestSimulation();
+    }
+  }, delay);
 }
 
 function serializeCircuit() {
@@ -289,6 +377,20 @@ function loadFromSnapshot(snapshot) {
     if (comp.type === "lamp" && comp.props.litColor === undefined) {
       comp.props.litColor = "#f6c453";
     }
+    if (comp.type === "timer") {
+      if (comp.props.delayMs === undefined) comp.props.delayMs = 3000;
+      if (comp.props.pullInVoltage === undefined) comp.props.pullInVoltage = 9;
+      if (comp.props.coilResistance === undefined) comp.props.coilResistance = 120;
+      if (comp.props.loop === undefined) comp.props.loop = false;
+      if (comp.props.initialClosed === undefined) comp.props.initialClosed = false;
+      if (!comp.props.timerState) comp.props.timerState = {};
+      if (!Number.isFinite(comp.props.delayMs)) comp.props.delayMs = 3000;
+    }
+    if (comp.type === "time_timer") {
+      if (!comp.props.startTime) comp.props.startTime = "08:00";
+      if (!comp.props.endTime) comp.props.endTime = "17:00";
+      if (!comp.props.timerState) comp.props.timerState = {};
+    }
     if (comp.type === "contactor" && comp.props.coilRatedVoltage === undefined) {
       comp.props.coilRatedVoltage = comp.props.pullInVoltage ?? 12;
     }
@@ -323,6 +425,7 @@ function loadFromSnapshot(snapshot) {
   state.contactorStates = {};
   state.lampLit = {};
   state.motorRunning = {};
+  state.timerStates = {};
   state.faults = {};
   state.simDirty = true;
   updatePropsPanel();
@@ -402,9 +505,18 @@ async function requestSimulation() {
   state.simDirty = false;
   simStatus.textContent = "Simulerar...";
   try {
-    const payload = await postJSON("/api/simulate", serializeCircuit());
+    const payload = await postJSON("/api/simulate", { ...serializeCircuit(), simTime: Date.now() });
     state.lastSolution = payload.solution || null;
     state.contactorStates = payload.contactorStates || {};
+    state.timerStates = payload.timerStates || {};
+    if (payload.timerStates) {
+      Object.entries(payload.timerStates).forEach(([id, timerState]) => {
+        const comp = state.components.find((c) => c.id === id);
+        if (comp) {
+          comp.props.timerState = timerState;
+        }
+      });
+    }
     state.lampLit = payload.lampLit || {};
     state.motorRunning = payload.motorRunning || {};
     state.motor3phDirection = payload.motor3phDirection || {};
@@ -469,6 +581,7 @@ async function requestSimulation() {
     updatePropsPanel();
     render();
     await refreshMeters();
+    scheduleNextSimulation();
     if (state.simDirty) {
       requestSimulation();
     }
@@ -613,6 +726,22 @@ function getTerminals(component) {
       ];
       break;
     case "switch_spdt":
+      base = [
+        { x: -COMPONENT_W / 2, y: 0 },
+        { x: COMPONENT_W / 2, y: -12 },
+        { x: COMPONENT_W / 2, y: 12 },
+      ];
+      break;
+    case "timer":
+      base = [
+        { x: -COMPONENT_W / 2, y: -12 },
+        { x: -COMPONENT_W / 2, y: 12 },
+        { x: COMPONENT_W / 2 - 18, y: 0 },
+        { x: COMPONENT_W / 2, y: -12 },
+        { x: COMPONENT_W / 2, y: 12 },
+      ];
+      break;
+    case "time_timer":
       base = [
         { x: -COMPONENT_W / 2, y: 0 },
         { x: COMPONENT_W / 2, y: -12 },
@@ -776,6 +905,86 @@ function drawContactorSymbol(component) {
   }
 }
 
+function drawTimerSymbol(component) {
+  const coilX = -25;
+  const coilRadius = 8;
+  const coilTermX = -50;
+  const coilTermOffsetY = 16;
+  const contactX = 15;
+  const outputX = 45;
+  const contactOffset = 10;
+  const timerState = component.props.timerState || {};
+  const closed = Boolean(timerState.outputClosed);
+  const running = Boolean(timerState.running);
+  const remainingMs = Number(timerState.remainingMs);
+
+  ctx.beginPath();
+  ctx.arc(coilX, 0, coilRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(coilTermX, -coilTermOffsetY);
+  ctx.lineTo(coilX - coilRadius, -coilTermOffsetY);
+  ctx.moveTo(coilTermX, coilTermOffsetY);
+  ctx.lineTo(coilX - coilRadius, coilTermOffsetY);
+  ctx.stroke();
+
+  const upperY = -contactOffset;
+  const lowerY = contactOffset;
+  const targetY = closed ? upperY : lowerY;
+  ctx.beginPath();
+  ctx.moveTo(contactX - 10, 0);
+  ctx.lineTo(contactX, 0);
+  ctx.moveTo(outputX, upperY);
+  ctx.lineTo(outputX + 10, upperY);
+  ctx.moveTo(outputX, lowerY);
+  ctx.lineTo(outputX + 10, lowerY);
+  ctx.moveTo(contactX, 0);
+  ctx.lineTo(outputX - 8, targetY);
+  ctx.lineTo(outputX, targetY);
+  ctx.stroke();
+
+  if (running && Number.isFinite(remainingMs)) {
+    ctx.save();
+    ctx.fillStyle = "#2f2f34";
+    ctx.font = "10px Space Grotesk";
+    ctx.textAlign = "center";
+    ctx.fillText(`${(remainingMs / 1000).toFixed(1)}s`, 0, 30);
+    ctx.restore();
+  }
+}
+
+function drawTimeTimerSymbol(component) {
+  const contactX = -10;
+  const outputX = 20;
+  const contactOffset = 10;
+  const timerState = component.props.timerState || {};
+  const closed = Boolean(timerState.outputClosed);
+  const upperY = -contactOffset;
+  const lowerY = contactOffset;
+  const targetY = closed ? upperY : lowerY;
+
+  ctx.beginPath();
+  ctx.arc(-25, 0, 10, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-25, -6);
+  ctx.lineTo(-25, 0);
+  ctx.lineTo(-18, 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(contactX - 10, 0);
+  ctx.lineTo(contactX, 0);
+  ctx.moveTo(outputX, upperY);
+  ctx.lineTo(outputX + 10, upperY);
+  ctx.moveTo(outputX, lowerY);
+  ctx.lineTo(outputX + 10, lowerY);
+  ctx.moveTo(contactX, 0);
+  ctx.lineTo(outputX - 8, targetY);
+  ctx.lineTo(outputX, targetY);
+  ctx.stroke();
+}
+
 function getTerminalLabels(component) {
   if (component.type === "voltage_source") {
     const type = component.props.supplyType || "DC";
@@ -824,6 +1033,22 @@ function getTerminalLabels(component) {
       }
     }
     return labels;
+  }
+  if (component.type === "timer") {
+    return [
+      { index: 0, label: "A1" },
+      { index: 1, label: "A2" },
+      { index: 2, label: "C" },
+      { index: 3, label: "NO" },
+      { index: 4, label: "NC" },
+    ];
+  }
+  if (component.type === "time_timer") {
+    return [
+      { index: 0, label: "C" },
+      { index: 1, label: "NO" },
+      { index: 2, label: "NC" },
+    ];
   }
   if (component.type === "switch_spdt") {
     return [
@@ -1152,6 +1377,10 @@ function drawComponent(component) {
       ctx.fillText("ON", 0, 30);
       ctx.restore();
     }
+  } else if (component.type === "timer") {
+    drawTimerSymbol(component);
+  } else if (component.type === "time_timer") {
+    drawTimeTimerSymbol(component);
   } else if (component.type === "contactor") {
     drawContactorSymbol(component);
   } else {
@@ -1181,6 +1410,32 @@ function drawComponent(component) {
     ctx.font = "12px Space Grotesk";
     ctx.textAlign = "left";
     ctx.fillText(component.props.name, component.x + 18, component.y - 18);
+    ctx.restore();
+  }
+
+  if (component.type === "timer") {
+    const timerState = state.timerStates[component.id] || component.props.timerState || {};
+    let remainingMs = timerState.remainingMs;
+    if (timerState.running && Number.isFinite(timerState.startAt)) {
+      const delayMs = Number.isFinite(component.props.delayMs) ? component.props.delayMs : 0;
+      remainingMs = Math.max(0, delayMs - (Date.now() - timerState.startAt));
+    }
+    if (Number.isFinite(remainingMs) && remainingMs > 0) {
+      ctx.save();
+      ctx.fillStyle = "#2f2f34";
+      ctx.font = "11px Space Grotesk";
+      ctx.textAlign = "left";
+      ctx.fillText(`${(remainingMs / 1000).toFixed(1)}s`, component.x + 18, component.y + 18);
+      ctx.restore();
+    }
+  }
+  if (component.type === "time_timer") {
+    const timerState = state.timerStates[component.id] || component.props.timerState || {};
+    ctx.save();
+    ctx.fillStyle = timerState.outputClosed ? "#2b6cb0" : "#6b6b72";
+    ctx.font = "11px Space Grotesk";
+    ctx.textAlign = "left";
+    ctx.fillText(timerState.outputClosed ? "PÅ" : "AV", component.x + 18, component.y + 18);
     ctx.restore();
   }
 
@@ -1646,7 +1901,7 @@ function updatePropsPanel() {
         </select>
       </label>`;
   }
-  if ("coilResistance" in comp.props) {
+  if (comp.type === "contactor") {
     html += `
       <label>Spolresistans (Ω)
         <input type="number" step="any" name="coilResistance" value="${comp.props.coilResistance}" />
@@ -1682,9 +1937,47 @@ function updatePropsPanel() {
               <option value="NO" ${pole === "NO" ? "selected" : ""}>NO</option>
               <option value="NC" ${pole === "NC" ? "selected" : ""}>NC</option>
             </select>
-          </label>`;
+        </label>`;
       });
     }
+  }
+  if (comp.type === "timer") {
+    const timerState = state.timerStates[comp.id] || comp.props.timerState || {};
+    let remainingMs = timerState.remainingMs;
+    if (timerState.running && Number.isFinite(timerState.startAt)) {
+      const delayMs = Number.isFinite(comp.props.delayMs) ? comp.props.delayMs : 0;
+      remainingMs = Math.max(0, delayMs - (Date.now() - timerState.startAt));
+    }
+    const remaining = Number.isFinite(remainingMs) ? (remainingMs / 1000).toFixed(1) : "-";
+    html += `
+      <label>Spolresistans (Ω)
+        <input type="number" step="any" name="coilResistance" value="${comp.props.coilResistance}" />
+      </label>
+      <label>Inslagsspänning (V)
+        <input type="number" step="any" name="pullInVoltage" value="${comp.props.pullInVoltage}" />
+      </label>
+      <label>Fördröjning (s)
+        <input type="number" step="0.1" name="delaySeconds" value="${(comp.props.delayMs || 0) / 1000}" />
+      </label>
+      <label>Loop
+        <select name="timerLoop">
+          <option value="false" ${!comp.props.loop ? "selected" : ""}>Nej</option>
+          <option value="true" ${comp.props.loop ? "selected" : ""}>Ja</option>
+        </select>
+      </label>
+      <div class="muted">Status: ${timerState.outputClosed ? "Sluten" : "Öppen"}</div>
+      <div class="muted">Kvar: ${remaining}s</div>`;
+  }
+  if (comp.type === "time_timer") {
+    const timerState = state.timerStates[comp.id] || comp.props.timerState || {};
+    html += `
+      <label>Starttid
+        <input type="time" name="startTime" value="${comp.props.startTime || "08:00"}" />
+      </label>
+      <label>Stopptid
+        <input type="time" name="endTime" value="${comp.props.endTime || "17:00"}" />
+      </label>
+      <div class="muted">Status: ${timerState.outputClosed ? "PÅ" : "AV"}</div>`;
   }
   if ("closed" in comp.props) {
     html += `
@@ -1731,6 +2024,15 @@ function updatePropsPanel() {
       if (key === "coilResistance") comp.props.coilResistance = Number(event.target.value);
       if (key === "pullInVoltage") comp.props.pullInVoltage = Number(event.target.value);
       if (key === "coilRatedVoltage") comp.props.coilRatedVoltage = Number(event.target.value);
+      if (key === "delaySeconds") {
+        const seconds = Number(event.target.value);
+        if (Number.isFinite(seconds)) {
+          comp.props.delayMs = Math.max(0, seconds * 1000);
+        }
+      }
+      if (key === "timerLoop") comp.props.loop = event.target.value === "true";
+      if (key === "startTime") comp.props.startTime = event.target.value;
+      if (key === "endTime") comp.props.endTime = event.target.value;
       if (key === "contactType") comp.props.contactType = event.target.value;
       if (key === "poleCount") {
         const nextCount = Math.max(1, Math.min(6, Number(event.target.value) || 1));
@@ -2131,6 +2433,7 @@ clearBtn.addEventListener("click", () => {
   state.lampLit = {};
   state.motorRunning = {};
   state.motor3phDirection = {};
+  state.timerStates = {};
   state.faults = {};
   state.solveErrors = {};
   state.meters = [];
@@ -2138,6 +2441,7 @@ clearBtn.addEventListener("click", () => {
   state.simRunning = false;
   state.simDirty = true;
   state.draggingWirePoint = null;
+  clearSimSchedule();
   meterReadout.textContent = "-";
   simStatus.textContent = "Rensad.";
   updatePropsPanel();
@@ -2158,6 +2462,7 @@ simToggle.addEventListener("click", () => {
     markDirty();
   } else {
     simStatus.textContent = "Simulering pausad.";
+    clearSimSchedule();
   }
   updatePropsPanel();
   updateSimToggle();

@@ -96,25 +96,27 @@
       },
       {
         "id": "1dd9b7a2-923b-4199-8473-b82fc81dca8b",
+        "props": {
+          "name": "",
+          "position": "up"
+        },
+        "rotation": 0,
         "type": "switch_spdt",
         "variant": "switch_spdt",
         "x": 920,
-        "y": 80,
-        "rotation": 0,
-        "props": {
-          "position": "up"
-        }
+        "y": 80
       },
       {
         "id": "18c594f4-1efb-46d0-b8d0-054cf840fb54",
+        "props": {
+          "name": "",
+          "position": "down"
+        },
+        "rotation": 0,
         "type": "switch_spdt",
         "variant": "switch_spdt",
         "x": 920,
-        "y": 180,
-        "rotation": 0,
-        "props": {
-          "position": "down"
-        }
+        "y": 180
       }
     ],
     "wires": [
@@ -398,15 +400,15 @@
         }
       },
       {
-        "id": "97f62fad-1553-4d1c-a9dc-123860236928",
+        "area": 1.5,
+        "color": "#2f2f34",
         "from": {
           "compId": "1dd9b7a2-923b-4199-8473-b82fc81dca8b",
           "index": 1
         },
-        "to": {
-          "compId": "18c594f4-1efb-46d0-b8d0-054cf840fb54",
-          "index": 1
-        },
+        "id": "97f62fad-1553-4d1c-a9dc-123860236928",
+        "length": 1,
+        "material": "copper",
         "points": [
           {
             "x": 1040,
@@ -417,21 +419,21 @@
             "y": 160
           }
         ],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
+        "to": {
+          "compId": "18c594f4-1efb-46d0-b8d0-054cf840fb54",
+          "index": 1
+        }
       },
       {
-        "id": "759753ca-55cf-4be8-94d7-2490c44a7c9e",
+        "area": 1.5,
+        "color": "#2f2f34",
         "from": {
           "compId": "18c594f4-1efb-46d0-b8d0-054cf840fb54",
           "index": 2
         },
-        "to": {
-          "compId": "1dd9b7a2-923b-4199-8473-b82fc81dca8b",
-          "index": 2
-        },
+        "id": "759753ca-55cf-4be8-94d7-2490c44a7c9e",
+        "length": 1,
+        "material": "copper",
         "points": [
           {
             "x": 1020,
@@ -442,42 +444,42 @@
             "y": 80
           }
         ],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
+        "to": {
+          "compId": "1dd9b7a2-923b-4199-8473-b82fc81dca8b",
+          "index": 2
+        }
       },
       {
-        "id": "8a870b29-4b1f-4aa3-8dbe-92e96b69391d",
+        "area": 1.5,
+        "color": "#2f2f34",
         "from": {
           "compId": "1dd9b7a2-923b-4199-8473-b82fc81dca8b",
           "index": 0
         },
+        "id": "8a870b29-4b1f-4aa3-8dbe-92e96b69391d",
+        "length": 1,
+        "material": "copper",
+        "points": [],
         "to": {
           "compId": "16e47fa6-1add-4066-9d1d-c625c6b1c873",
           "index": 1
-        },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
+        }
       },
       {
-        "id": "89733e2a-4714-4432-bc47-39402ec2fd24",
+        "area": 1.5,
+        "color": "#2f2f34",
         "from": {
           "compId": "18c594f4-1efb-46d0-b8d0-054cf840fb54",
           "index": 0
         },
+        "id": "89733e2a-4714-4432-bc47-39402ec2fd24",
+        "length": 1,
+        "material": "copper",
+        "points": [],
         "to": {
           "compId": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
           "index": 1
-        },
-        "points": [],
-        "color": "#2f2f34",
-        "area": 1.5,
-        "length": 1,
-        "material": "copper"
+        }
       }
     ],
     "meters": [
@@ -544,9 +546,39 @@
         "x": 482,
         "y": 557,
         "unit": "V"
+      },
+      {
+        "id": "2c22fb73-6cc5-45c3-adb9-d29914725d30",
+        "mode": "ac_phase",
+        "componentId": null,
+        "aRef": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 0
+        },
+        "bRef": {
+          "compId": "7802b257-61c1-40e6-8279-ab902083e118",
+          "index": 2
+        },
+        "x": 748,
+        "y": 360,
+        "unit": "\u00b0"
+      },
+      {
+        "id": "fc241cc2-bb4f-4ea2-94b9-f9a30336830f",
+        "mode": "current",
+        "componentId": "359e2fbb-0209-470c-9bce-2d9a6e7e8704",
+        "aRef": null,
+        "bRef": null,
+        "x": 341,
+        "y": 479,
+        "unit": "A"
       }
-    ]
+    ],
+    "canvasSize": {
+      "width": 1500,
+      "height": 1080
+    }
   },
-  "updatedAt": 1768518634597,
+  "updatedAt": 1768520039161,
   "createdAt": 1768512792518
 }

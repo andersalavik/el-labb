@@ -96,6 +96,10 @@ def get_terminal_count(component):
         if props.get("contactType", "standard") == "changeover":
             return 2 + 3 * len(poles)
         return 2 + 2 * len(poles)
+    if comp_type == "timer":
+        return 5
+    if comp_type == "time_timer":
+        return 3
     if comp_type == "voltage_source":
         props = component.get("props", {})
         supply = props.get("supplyType", "DC")
@@ -217,7 +221,7 @@ def build_terminal_nodes(components, wires, contactor_states):
     return {"terminal_nodes": terminal_nodes, "node_count": node_count + 1, "virtual_ground": virtual_ground}
 
 
-def build_model_dc(components, wires, contactor_states):
+def build_model_dc(components, wires, contactor_states, timer_states):
     terminal_data = build_terminal_nodes(components, wires, contactor_states)
     if "error" in terminal_data:
         return terminal_data
@@ -300,6 +304,30 @@ def build_model_dc(components, wires, contactor_states):
                     if n1_pole is None or n2_pole is None:
                         continue
                     resistors.append({"n1": n1_pole, "n2": n2_pole, "value": 0.01})
+        elif comp_type == "timer":
+            coil_n1 = terminal_nodes.get(f"{comp['id']}:0")
+            coil_n2 = terminal_nodes.get(f"{comp['id']}:1")
+            if coil_n1 is not None and coil_n2 is not None:
+                resistors.append(
+                    {"n1": coil_n1, "n2": coil_n2, "value": props.get("coilResistance", 120)}
+                )
+            state = timer_states.get(comp["id"], {})
+            output_closed = state.get("outputClosed", False)
+            n_common = terminal_nodes.get(f"{comp['id']}:2")
+            n_no = terminal_nodes.get(f"{comp['id']}:3")
+            n_nc = terminal_nodes.get(f"{comp['id']}:4")
+            target = n_no if output_closed else n_nc
+            if n_common is not None and target is not None:
+                resistors.append({"n1": n_common, "n2": target, "value": 0.01})
+        elif comp_type == "time_timer":
+            state = timer_states.get(comp["id"], {})
+            output_closed = state.get("outputClosed", False)
+            n_common = terminal_nodes.get(f"{comp['id']}:0")
+            n_no = terminal_nodes.get(f"{comp['id']}:1")
+            n_nc = terminal_nodes.get(f"{comp['id']}:2")
+            target = n_no if output_closed else n_nc
+            if n_common is not None and target is not None:
+                resistors.append({"n1": n_common, "n2": target, "value": 0.01})
         elif comp_type == "voltage_source":
             if props.get("supplyType", "DC") != "DC":
                 continue
@@ -328,7 +356,7 @@ def build_model_dc(components, wires, contactor_states):
     }
 
 
-def build_model_ac(components, wires, contactor_states, frequency_hz):
+def build_model_ac(components, wires, contactor_states, timer_states, frequency_hz):
     terminal_data = build_terminal_nodes(components, wires, contactor_states)
     if "error" in terminal_data:
         return terminal_data
@@ -426,6 +454,30 @@ def build_model_ac(components, wires, contactor_states, frequency_hz):
                     if n1_pole is None or n2_pole is None:
                         continue
                     impedances.append({"n1": n1_pole, "n2": n2_pole, "value": Complex(0.01, 0)})
+        elif comp_type == "timer":
+            coil_n1 = terminal_nodes.get(f"{comp['id']}:0")
+            coil_n2 = terminal_nodes.get(f"{comp['id']}:1")
+            if coil_n1 is not None and coil_n2 is not None:
+                impedances.append(
+                    {"n1": coil_n1, "n2": coil_n2, "value": Complex(props.get("coilResistance", 120), 0)}
+                )
+            state = timer_states.get(comp["id"], {})
+            output_closed = state.get("outputClosed", False)
+            n_common = terminal_nodes.get(f"{comp['id']}:2")
+            n_no = terminal_nodes.get(f"{comp['id']}:3")
+            n_nc = terminal_nodes.get(f"{comp['id']}:4")
+            target = n_no if output_closed else n_nc
+            if n_common is not None and target is not None:
+                impedances.append({"n1": n_common, "n2": target, "value": Complex(0.01, 0)})
+        elif comp_type == "time_timer":
+            state = timer_states.get(comp["id"], {})
+            output_closed = state.get("outputClosed", False)
+            n_common = terminal_nodes.get(f"{comp['id']}:0")
+            n_no = terminal_nodes.get(f"{comp['id']}:1")
+            n_nc = terminal_nodes.get(f"{comp['id']}:2")
+            target = n_no if output_closed else n_nc
+            if n_common is not None and target is not None:
+                impedances.append({"n1": n_common, "n2": target, "value": Complex(0.01, 0)})
         elif comp_type == "switch_spdt":
             if n1 is None:
                 continue
@@ -751,6 +803,93 @@ def compute_contactor_states(components, terminal_nodes, dc_voltages, ac_voltage
     return states
 
 
+def _parse_hhmm(value, fallback_minutes):
+    if not isinstance(value, str) or ":" not in value:
+        return fallback_minutes
+    parts = value.split(":")
+    if len(parts) != 2:
+        return fallback_minutes
+    try:
+        hours = int(parts[0])
+        minutes = int(parts[1])
+    except ValueError:
+        return fallback_minutes
+    if hours < 0 or hours > 23 or minutes < 0 or minutes > 59:
+        return fallback_minutes
+    return hours * 60 + minutes
+
+
+def compute_time_timer_states(components):
+    now = time.localtime()
+    current_minutes = now.tm_hour * 60 + now.tm_min
+    states = {}
+    for comp in components:
+        if comp.get("type") != "time_timer":
+            continue
+        props = comp.get("props", {})
+        start_minutes = _parse_hhmm(props.get("startTime"), 8 * 60)
+        end_minutes = _parse_hhmm(props.get("endTime"), 17 * 60)
+        if start_minutes == end_minutes:
+            active = False
+        elif end_minutes > start_minutes:
+            active = start_minutes <= current_minutes < end_minutes
+        else:
+            active = current_minutes >= start_minutes or current_minutes < end_minutes
+        states[comp["id"]] = {"outputClosed": active}
+    return states
+
+
+def compute_timer_states(components, terminal_nodes, dc_voltages, ac_voltages, sim_time_ms):
+    states = {}
+    now = int(sim_time_ms) if sim_time_ms is not None else int(time.time() * 1000)
+    for comp in components:
+        if comp.get("type") != "timer":
+            continue
+        props = comp.get("props", {})
+        delay_ms = max(0, int(props.get("delayMs", 1000)))
+        loop_mode = bool(props.get("loop", False))
+        initial_closed = bool(props.get("initialClosed", False))
+        pull_in = props.get("pullInVoltage", 0)
+        dv = _voltage_magnitude(comp, terminal_nodes, dc_voltages, ac_voltages)
+        energized = dv is not None and dv + EPSILON_V >= pull_in
+        prev = props.get("timerState", {}) or {}
+        running = bool(prev.get("running", False))
+        start_at = prev.get("startAt")
+        output_closed = bool(prev.get("outputClosed", False))
+        remaining_ms = delay_ms
+
+        if energized:
+            if not running or start_at is None:
+                running = True
+                start_at = now
+            elapsed = max(0, now - start_at)
+            if elapsed >= delay_ms:
+                if loop_mode:
+                    output_closed = not output_closed
+                    running = True
+                    start_at = now
+                    remaining_ms = delay_ms
+                else:
+                    output_closed = True
+                    running = False
+                    remaining_ms = 0
+            else:
+                remaining_ms = delay_ms - elapsed
+        else:
+            running = False
+            start_at = None
+            output_closed = initial_closed
+            remaining_ms = delay_ms
+
+        states[comp["id"]] = {
+            "running": running,
+            "startAt": start_at,
+            "outputClosed": output_closed,
+            "remainingMs": remaining_ms,
+        }
+    return states
+
+
 def compute_lamp_lit(components, terminal_nodes, dc_voltages, ac_voltages):
     lamp_lit = {}
     for comp in components:
@@ -875,7 +1014,13 @@ def get_ac_frequency(components):
 def solve_network(payload):
     components = payload.get("components", [])
     wires = payload.get("wires", [])
+    sim_time = payload.get("simTime")
     contactor_states = {comp["id"]: False for comp in components if comp.get("type") == "contactor"}
+    timer_states = {}
+    for comp in components:
+        if comp.get("type") == "timer":
+            timer_states[comp["id"]] = comp.get("props", {}).get("timerState", {}) or {}
+    timer_states.update(compute_time_timer_states(components))
     dc_solution = None
     dc_model = None
     ac_solution = None
@@ -888,7 +1033,7 @@ def solve_network(payload):
     debug_info = {"dc": {}, "ac": {}}
 
     for _ in range(3):
-        dc_model = build_model_dc(components, wires, contactor_states)
+        dc_model = build_model_dc(components, wires, contactor_states, timer_states)
         if "error" in dc_model:
             return dc_model
         dc_elements = dc_model["resistors"] + dc_model["sources"]
@@ -938,7 +1083,7 @@ def solve_network(payload):
             dc_solution = {"node_voltages": [0.0] * dc_model["node_count"], "source_currents": {}}
 
         if freq is not None:
-            ac_model = build_model_ac(components, wires, contactor_states, freq)
+            ac_model = build_model_ac(components, wires, contactor_states, timer_states, freq)
             if "error" in ac_model:
                 return ac_model
             ac_elements = ac_model["impedances"] + ac_model["sources"]
@@ -996,14 +1141,24 @@ def solve_network(payload):
             dc_solution["node_voltages"] if dc_solution else None,
             ac_solution["node_voltages"] if ac_solution else None,
         )
-        if updated == contactor_states:
+        updated_timers = compute_timer_states(
+            components,
+            terminal_nodes,
+            dc_solution["node_voltages"] if dc_solution else None,
+            ac_solution["node_voltages"] if ac_solution else None,
+            sim_time,
+        )
+        updated_timers.update(compute_time_timer_states(components))
+        if updated == contactor_states and updated_timers == timer_states:
             break
         contactor_states = updated
+        timer_states = updated_timers
 
     return {
         "components": components,
         "terminal_nodes": dc_model["terminal_nodes"],
         "contactor_states": contactor_states,
+        "timer_states": timer_states,
         "dc_solution": dc_solution,
         "ac_solution": ac_solution,
         "solve_errors": solve_errors,
@@ -1055,6 +1210,7 @@ def simulate_circuit(payload):
         "motor3phDirection": motor3ph_direction,
         "faults": faults,
         "solveErrors": result["solve_errors"],
+        "timerStates": result.get("timer_states", {}),
         "debugInfo": result.get("debug_info", {}),
     }
 
@@ -1183,6 +1339,10 @@ def api_measure():
             return jsonify({"value": abs(current) * math.sqrt(3)})
         elif comp_type == "contactor":
             z = Complex(props.get("coilResistance", 120), 0)
+        elif comp_type == "timer":
+            z = Complex(props.get("coilResistance", 120), 0)
+        elif comp_type == "time_timer":
+            return jsonify({"value": None})
         elif comp_type == "inductor":
             z = Complex(0, omega * max(props.get("value", 0.0), 1e-12))
         elif comp_type == "capacitor":
@@ -1252,6 +1412,10 @@ def api_measure():
             return jsonify({"value": s.re / s_abs})
         elif comp_type == "contactor":
             z = Complex(props.get("coilResistance", 120), 0)
+        elif comp_type == "timer":
+            z = Complex(props.get("coilResistance", 120), 0)
+        elif comp_type == "time_timer":
+            return jsonify({"value": None})
         elif comp_type == "inductor":
             z = Complex(0, omega * max(props.get("value", 0.0), 1e-12))
         elif comp_type == "capacitor":
@@ -1284,7 +1448,12 @@ def api_measure():
         b_ref = payload.get("bRef")
         if not a_ref or not b_ref:
             return jsonify({"error": "Saknar mätpunkter."}), 400
-        model = build_model_dc(components, payload.get("wires", []), result["contactor_states"])
+        model = build_model_dc(
+            components,
+            payload.get("wires", []),
+            result["contactor_states"],
+            result.get("timer_states", {}),
+        )
         if "error" in model:
             return jsonify({"error": model["error"]}), 400
         a_node = terminal_nodes.get(f"{a_ref['compId']}:{a_ref['index']}")
