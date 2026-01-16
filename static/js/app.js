@@ -59,6 +59,7 @@ const state = {
   motorRunning: {},
   motor3phDirection: {},
   timerStates: {},
+  plcStates: {},
   faults: {},
   solveErrors: {},
   wireDefaults: { color: "#2f2f34", area: 1.5, length: 1, material: "copper" },
@@ -126,6 +127,18 @@ const libraryGroups = [
         defaults: { startTime: "08:00", endTime: "17:00", timerState: {} },
       },
       {
+        id: "plc",
+        type: "plc",
+        label: "PLC",
+        defaults: {
+          inputs: 4,
+          outputs: 4,
+          inputThreshold: 9,
+          language: "LAD",
+          program: "A I1\n= Q1",
+        },
+      },
+      {
         id: "contactor_standard",
         type: "contactor",
         label: "Kontaktor",
@@ -178,6 +191,7 @@ const componentLabels = {
   contactor: "K",
   timer: "T",
   time_timer: "TT",
+  plc: "PLC",
   node: "N",
   ground: "GND",
 };
@@ -426,6 +440,14 @@ function loadFromSnapshot(snapshot) {
       if (!comp.props.endTime) comp.props.endTime = "17:00";
       if (!comp.props.timerState) comp.props.timerState = {};
     }
+    if (comp.type === "plc") {
+      if (comp.props.inputs === undefined) comp.props.inputs = 4;
+      if (comp.props.outputs === undefined) comp.props.outputs = 4;
+      if (comp.props.inputThreshold === undefined) comp.props.inputThreshold = 9;
+      if (!comp.props.language) comp.props.language = "LAD";
+      if (comp.props.program === undefined) comp.props.program = "A I1\n= Q1";
+      if (!comp.props.plcState) comp.props.plcState = {};
+    }
     if (comp.type === "contactor" && comp.props.coilRatedVoltage === undefined) {
       comp.props.coilRatedVoltage = comp.props.pullInVoltage ?? 12;
     }
@@ -461,6 +483,7 @@ function loadFromSnapshot(snapshot) {
   state.lampLit = {};
   state.motorRunning = {};
   state.timerStates = {};
+  state.plcStates = {};
   state.faults = {};
   state.simDirty = true;
   updatePropsPanel();
@@ -544,11 +567,28 @@ async function requestSimulation() {
     state.lastSolution = payload.solution || null;
     state.contactorStates = payload.contactorStates || {};
     state.timerStates = payload.timerStates || {};
+    state.plcStates = payload.plcStates || {};
     if (payload.timerStates) {
       Object.entries(payload.timerStates).forEach(([id, timerState]) => {
         const comp = state.components.find((c) => c.id === id);
         if (comp) {
           comp.props.timerState = timerState;
+        }
+      });
+    }
+    if (payload.plcStates) {
+      Object.entries(payload.plcStates).forEach(([id, outputs]) => {
+        const comp = state.components.find((c) => c.id === id);
+        if (comp) {
+          comp.props.plcOutputs = outputs;
+        }
+      });
+    }
+    if (payload.plcMeta) {
+      Object.entries(payload.plcMeta).forEach(([id, meta]) => {
+        const comp = state.components.find((c) => c.id === id);
+        if (comp) {
+          comp.props.plcState = meta;
         }
       });
     }
@@ -714,11 +754,40 @@ function getContactorLayout(component) {
   };
 }
 
+function getPlcLayout(component) {
+  const inputs = Math.max(1, Math.min(64, Number(component.props.inputs) || 1));
+  const outputs = Math.max(1, Math.min(64, Number(component.props.outputs) || 1));
+  const spacing = 16;
+  const width = 150;
+  const rows = Math.max(inputs + 2, outputs);
+  const height = Math.max(70, rows * spacing + 28);
+  const leftX = -width / 2;
+  const rightX = width / 2;
+  const topY = -height / 2 + 18;
+  return {
+    inputs,
+    outputs,
+    spacing,
+    width,
+    height,
+    leftX,
+    rightX,
+    topY,
+    inputsStart: topY + spacing * 2,
+    outputsStart: topY,
+  };
+}
+
 function getComponentSize(component) {
   let w = component.type === "node" ? 20 : COMPONENT_W;
   let h = component.type === "node" ? 20 : COMPONENT_H;
   if (component.type === "contactor") {
     const layout = getContactorLayout(component);
+    w = layout.width;
+    h = layout.height;
+  }
+  if (component.type === "plc") {
+    const layout = getPlcLayout(component);
     w = layout.width;
     h = layout.height;
   }
@@ -784,6 +853,19 @@ function getTerminals(component) {
         { x: COMPONENT_W / 2, y: 12 },
       ];
       break;
+    case "plc": {
+      const layout = getPlcLayout(component);
+      base = [];
+      base.push({ x: layout.leftX, y: layout.topY });
+      base.push({ x: layout.leftX, y: layout.topY + layout.spacing });
+      for (let i = 0; i < layout.inputs; i += 1) {
+        base.push({ x: layout.leftX, y: layout.inputsStart + i * layout.spacing });
+      }
+      for (let i = 0; i < layout.outputs; i += 1) {
+        base.push({ x: layout.rightX, y: layout.outputsStart + i * layout.spacing });
+      }
+      break;
+    }
     case "contactor": {
       const layout = getContactorLayout(component);
       base = [
@@ -1085,6 +1167,21 @@ function getTerminalLabels(component) {
       { index: 1, label: "NO" },
       { index: 2, label: "NC" },
     ];
+  }
+  if (component.type === "plc") {
+    const labels = [
+      { index: 0, label: "M" },
+      { index: 1, label: "L+" },
+    ];
+    const inputs = Math.max(1, Math.min(64, Number(component.props.inputs) || 1));
+    const outputs = Math.max(1, Math.min(64, Number(component.props.outputs) || 1));
+    for (let i = 0; i < inputs; i += 1) {
+      labels.push({ index: 2 + i, label: `I${i + 1}` });
+    }
+    for (let i = 0; i < outputs; i += 1) {
+      labels.push({ index: 2 + inputs + i, label: `Q${i + 1}` });
+    }
+    return labels;
   }
   if (component.type === "switch_spdt") {
     return [
@@ -1417,6 +1514,19 @@ function drawComponent(component) {
     drawTimerSymbol(component);
   } else if (component.type === "time_timer") {
     drawTimeTimerSymbol(component);
+  } else if (component.type === "plc") {
+    const layout = getPlcLayout(component);
+    ctx.beginPath();
+    ctx.rect(-layout.width / 2, -layout.height / 2, layout.width, layout.height);
+    ctx.stroke();
+    ctx.save();
+    ctx.fillStyle = "#2f2f34";
+    ctx.font = "12px Space Grotesk";
+    ctx.textAlign = "center";
+    ctx.fillText("PLC", 0, -layout.height / 2 + 14);
+    ctx.font = "10px Space Grotesk";
+    ctx.fillText(`${component.props.language || "LAD"}`, 0, -layout.height / 2 + 28);
+    ctx.restore();
   } else if (component.type === "contactor") {
     drawContactorSymbol(component);
   } else {
@@ -2059,6 +2169,27 @@ function updatePropsPanel() {
       </label>
       <div class="muted">Status: ${timerState.outputClosed ? "PÅ" : "AV"}</div>`;
   }
+  if (comp.type === "plc") {
+    html += `
+      <label>Språk
+        <select name="plcLanguage">
+          <option value="LAD" ${comp.props.language === "LAD" ? "selected" : ""}>LAD</option>
+          <option value="ST" disabled>ST (kommer)</option>
+        </select>
+      </label>
+      <label>Antal ingångar
+        <input type="number" min="1" max="64" step="1" name="plcInputs" value="${comp.props.inputs}" />
+      </label>
+      <label>Antal utgångar
+        <input type="number" min="1" max="64" step="1" name="plcOutputs" value="${comp.props.outputs}" />
+      </label>
+      <label>Ingångströskel (V)
+        <input type="number" step="0.1" name="plcThreshold" value="${comp.props.inputThreshold || 9}" />
+      </label>
+      <label>Program (LAD-text)
+        <textarea name="plcProgram" rows="8" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${comp.props.program || ""}</textarea>
+      </label>`;
+  }
   if ("closed" in comp.props) {
     html += `
       <label>Status
@@ -2113,6 +2244,11 @@ function updatePropsPanel() {
       if (key === "timerLoop") comp.props.loop = event.target.value === "true";
       if (key === "startTime") comp.props.startTime = event.target.value;
       if (key === "endTime") comp.props.endTime = event.target.value;
+      if (key === "plcLanguage") comp.props.language = event.target.value;
+      if (key === "plcInputs") comp.props.inputs = Math.max(1, Math.min(64, Number(event.target.value) || 1));
+      if (key === "plcOutputs") comp.props.outputs = Math.max(1, Math.min(64, Number(event.target.value) || 1));
+      if (key === "plcThreshold") comp.props.inputThreshold = Number(event.target.value) || 0;
+      if (key === "plcProgram") comp.props.program = event.target.value;
       if (key === "contactType") comp.props.contactType = event.target.value;
       if (key === "poleCount") {
         const nextCount = Math.max(1, Math.min(6, Number(event.target.value) || 1));
@@ -2530,6 +2666,7 @@ clearBtn.addEventListener("click", () => {
   state.motorRunning = {};
   state.motor3phDirection = {};
   state.timerStates = {};
+  state.plcStates = {};
   state.faults = {};
   state.solveErrors = {};
   state.meters = [];

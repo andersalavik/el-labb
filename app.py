@@ -100,6 +100,11 @@ def get_terminal_count(component):
         return 5
     if comp_type == "time_timer":
         return 3
+    if comp_type == "plc":
+        props = component.get("props", {})
+        inputs = max(1, min(64, int(props.get("inputs", 4))))
+        outputs = max(1, min(64, int(props.get("outputs", 4))))
+        return 2 + inputs + outputs
     if comp_type == "voltage_source":
         props = component.get("props", {})
         supply = props.get("supplyType", "DC")
@@ -221,7 +226,7 @@ def build_terminal_nodes(components, wires, contactor_states):
     return {"terminal_nodes": terminal_nodes, "node_count": node_count + 1, "virtual_ground": virtual_ground}
 
 
-def build_model_dc(components, wires, contactor_states, timer_states):
+def build_model_dc(components, wires, contactor_states, timer_states, plc_states):
     terminal_data = build_terminal_nodes(components, wires, contactor_states)
     if "error" in terminal_data:
         return terminal_data
@@ -328,6 +333,22 @@ def build_model_dc(components, wires, contactor_states, timer_states):
             target = n_no if output_closed else n_nc
             if n_common is not None and target is not None:
                 resistors.append({"n1": n_common, "n2": target, "value": 0.01})
+        elif comp_type == "plc":
+            outputs_state = plc_states.get(comp["id"], [])
+            props = comp.get("props", {})
+            inputs = max(1, min(64, int(props.get("inputs", 4))))
+            outputs = max(1, min(64, int(props.get("outputs", 4))))
+            node_m = terminal_nodes.get(f"{comp['id']}:0")
+            node_l = terminal_nodes.get(f"{comp['id']}:1")
+            if node_l is None:
+                continue
+            for idx in range(outputs):
+                if idx >= len(outputs_state) or not outputs_state[idx]:
+                    continue
+                n_out = terminal_nodes.get(f"{comp['id']}:{2 + inputs + idx}")
+                if n_out is None:
+                    continue
+                resistors.append({"n1": node_l, "n2": n_out, "value": 0.01})
         elif comp_type == "voltage_source":
             if props.get("supplyType", "DC") != "DC":
                 continue
@@ -356,7 +377,7 @@ def build_model_dc(components, wires, contactor_states, timer_states):
     }
 
 
-def build_model_ac(components, wires, contactor_states, timer_states, frequency_hz):
+def build_model_ac(components, wires, contactor_states, timer_states, plc_states, frequency_hz):
     terminal_data = build_terminal_nodes(components, wires, contactor_states)
     if "error" in terminal_data:
         return terminal_data
@@ -478,6 +499,21 @@ def build_model_ac(components, wires, contactor_states, timer_states, frequency_
             target = n_no if output_closed else n_nc
             if n_common is not None and target is not None:
                 impedances.append({"n1": n_common, "n2": target, "value": Complex(0.01, 0)})
+        elif comp_type == "plc":
+            outputs_state = plc_states.get(comp["id"], [])
+            props = comp.get("props", {})
+            inputs = max(1, min(64, int(props.get("inputs", 4))))
+            outputs = max(1, min(64, int(props.get("outputs", 4))))
+            node_l = terminal_nodes.get(f"{comp['id']}:1")
+            if node_l is None:
+                continue
+            for idx in range(outputs):
+                if idx >= len(outputs_state) or not outputs_state[idx]:
+                    continue
+                n_out = terminal_nodes.get(f"{comp['id']}:{2 + inputs + idx}")
+                if n_out is None:
+                    continue
+                impedances.append({"n1": node_l, "n2": n_out, "value": Complex(0.01, 0)})
         elif comp_type == "switch_spdt":
             if n1 is None:
                 continue
@@ -839,6 +875,351 @@ def compute_time_timer_states(components):
     return states
 
 
+def _parse_plc_operand(token, inputs, outputs, timers, memories, counters):
+    token = token.strip().upper()
+    if token.startswith("I"):
+        try:
+            idx = int(token[1:]) - 1
+        except ValueError:
+            return None
+        if 0 <= idx < len(inputs):
+            return bool(inputs[idx])
+        return False
+    if token.startswith("Q"):
+        try:
+            idx = int(token[1:]) - 1
+        except ValueError:
+            return None
+        if 0 <= idx < len(outputs):
+            return bool(outputs[idx])
+        return False
+    if token.startswith("M"):
+        try:
+            idx = int(token[1:]) - 1
+        except ValueError:
+            return None
+        return bool(memories.get(idx, False))
+    if token.startswith("C"):
+        try:
+            idx = int(token[1:]) - 1
+        except ValueError:
+            return None
+        return bool(counters.get(idx, False))
+    if token.startswith("T"):
+        try:
+            idx = int(token[1:]) - 1
+        except ValueError:
+            return None
+        return bool(timers.get(idx, False))
+    return None
+
+
+def compute_plc_states(components, terminal_nodes, dc_voltages, ac_voltages, sim_time_ms):
+    states = {}
+    meta = {}
+    now = int(sim_time_ms) if sim_time_ms is not None else int(time.time() * 1000)
+    for comp in components:
+        if comp.get("type") != "plc":
+            continue
+        props = comp.get("props", {})
+        inputs_count = max(1, min(64, int(props.get("inputs", 4))))
+        outputs_count = max(1, min(64, int(props.get("outputs", 4))))
+        threshold = float(props.get("inputThreshold", 9))
+        inputs = [False] * inputs_count
+        outputs = [False] * outputs_count
+        plc_state = props.get("plcState", {}) or {}
+        timers_state = plc_state.get("timers", {})
+        memories_state = plc_state.get("mem", {})
+        counters_state = plc_state.get("counters", {})
+        trig_state = plc_state.get("trig", {})
+        timers_output = {}
+        counters_output = {}
+        for key, data in counters_state.items():
+            if not key.startswith("C"):
+                continue
+            try:
+                idx = int(key[1:]) - 1
+            except ValueError:
+                continue
+            counters_output[idx] = bool(data.get("q", False))
+        node_m = terminal_nodes.get(f"{comp['id']}:0")
+        for idx in range(inputs_count):
+            node_i = terminal_nodes.get(f"{comp['id']}:{2 + idx}")
+            if node_m is None or node_i is None:
+                continue
+            dv = 0.0
+            if dc_voltages is not None and node_m < len(dc_voltages) and node_i < len(dc_voltages):
+                dv = max(dv, abs(dc_voltages[node_i] - dc_voltages[node_m]))
+            if ac_voltages is not None and node_m < len(ac_voltages) and node_i < len(ac_voltages):
+                dv = max(dv, abs(ac_voltages[node_i] - ac_voltages[node_m]))
+            inputs[idx] = dv + EPSILON_V >= threshold
+
+        program = props.get("program", "")
+        language = props.get("language", "LAD")
+        if language != "LAD":
+            states[comp["id"]] = outputs
+            meta[comp["id"]] = {
+                "timers": timers_state,
+                "mem": memories_state,
+                "counters": counters_state,
+                "trig": trig_state,
+            }
+            continue
+        acc = None
+        for raw in program.splitlines():
+            line = raw.strip()
+            if not line:
+                acc = None
+                continue
+            if line.startswith("//") or line.startswith("#") or line.startswith(";"):
+                continue
+            parts = line.replace("=", " = ").split()
+            if not parts:
+                continue
+            op = parts[0].upper()
+            if op == "L" and len(parts) >= 2:
+                operand = _parse_plc_operand(
+                    parts[1], inputs, outputs, timers_output, memories_state, counters_output
+                )
+                if operand is None:
+                    continue
+                acc = operand
+                continue
+            if op == "MOVE" and len(parts) >= 3:
+                operand = _parse_plc_operand(
+                    parts[1], inputs, outputs, timers_output, memories_state, counters_output
+                )
+                if operand is None:
+                    continue
+                acc = operand
+                target = parts[2].upper()
+                if target.startswith("Q"):
+                    try:
+                        idx = int(target[1:]) - 1
+                    except ValueError:
+                        continue
+                    if 0 <= idx < outputs_count:
+                        outputs[idx] = bool(acc)
+                if target.startswith("M"):
+                    try:
+                        idx = int(target[1:]) - 1
+                    except ValueError:
+                        continue
+                    if idx >= 0:
+                        memories_state[idx] = bool(acc)
+                acc = None
+                continue
+            if op in {"A", "AN", "O", "ON", "U", "UN"} and len(parts) >= 2:
+                operand = _parse_plc_operand(
+                    parts[1], inputs, outputs, timers_output, memories_state, counters_output
+                )
+                if operand is None:
+                    continue
+                if op in {"AN", "UN"}:
+                    operand = not operand
+                if op == "ON":
+                    operand = not operand
+                if acc is None:
+                    acc = operand
+                else:
+                    acc = acc and operand if op in {"A", "AN", "U", "UN"} else acc or operand
+                continue
+            if op in {"TON", "TOF", "TP"} and len(parts) >= 3:
+                timer_id = parts[1].upper()
+                if not timer_id.startswith("T"):
+                    continue
+                try:
+                    t_index = int(timer_id[1:]) - 1
+                except ValueError:
+                    continue
+                try:
+                    delay_s = float(parts[2])
+                except ValueError:
+                    delay_s = 0.0
+                delay_ms = max(0, int(delay_s * 1000))
+                t_state = timers_state.get(timer_id, {})
+                prev_in = bool(t_state.get("in", False))
+                output = bool(t_state.get("q", False))
+                start_at = t_state.get("startAt")
+                acc_value = bool(acc) if acc is not None else False
+
+                if op == "TON":
+                    if acc_value:
+                        if not prev_in:
+                            start_at = now
+                        elapsed = max(0, now - (start_at or now))
+                        output = elapsed >= delay_ms
+                    else:
+                        output = False
+                        start_at = None
+                elif op == "TOF":
+                    if acc_value:
+                        output = True
+                        start_at = None
+                    else:
+                        if prev_in:
+                            start_at = now
+                        elapsed = max(0, now - (start_at or now))
+                        output = elapsed < delay_ms
+                elif op == "TP":
+                    if acc_value and not prev_in:
+                        start_at = now
+                        output = True
+                    if start_at is not None:
+                        elapsed = max(0, now - start_at)
+                        output = elapsed < delay_ms
+                        if not output:
+                            start_at = None
+                    if not acc_value and start_at is None:
+                        output = False
+
+                timers_state[timer_id] = {"in": acc_value, "q": output, "startAt": start_at}
+                timers_output[t_index] = output
+                acc = output
+                continue
+            if op in {"CTU", "CTD"} and len(parts) >= 2:
+                counter_id = parts[1].upper()
+                if not counter_id.startswith("C"):
+                    continue
+                try:
+                    c_index = int(counter_id[1:]) - 1
+                except ValueError:
+                    continue
+                pv = None
+                for token in parts[2:]:
+                    if token.upper().startswith("PV="):
+                        try:
+                            pv = int(float(token.split("=", 1)[1]))
+                        except ValueError:
+                            pv = None
+                    else:
+                        try:
+                            pv = int(float(token))
+                        except ValueError:
+                            continue
+                c_state = counters_state.get(counter_id, {})
+                if pv is None:
+                    pv = int(c_state.get("pv", 1))
+                if op == "CTD" and not c_state:
+                    c_state = {"cv": pv, "pv": pv, "cu": False, "q": False}
+                cv = int(c_state.get("cv", 0))
+                prev_cu = bool(c_state.get("cu", False))
+                acc_value = bool(acc) if acc is not None else False
+                if acc_value and not prev_cu:
+                    if op == "CTU":
+                        cv += 1
+                    else:
+                        cv = max(0, cv - 1)
+                if op == "CTU":
+                    q = cv >= pv
+                else:
+                    q = cv <= 0
+                counters_state[counter_id] = {"cv": cv, "pv": pv, "cu": acc_value, "q": q}
+                counters_output[c_index] = q
+                acc = q
+                continue
+            if op in {"R_TRIG", "F_TRIG"} and len(parts) >= 2:
+                target = parts[1].upper()
+                acc_value = bool(acc) if acc is not None else False
+                prev = bool(trig_state.get(target, False))
+                if op == "R_TRIG":
+                    pulse = acc_value and not prev
+                else:
+                    pulse = (not acc_value) and prev
+                trig_state[target] = acc_value
+                if target.startswith("M"):
+                    try:
+                        idx = int(target[1:]) - 1
+                    except ValueError:
+                        continue
+                    if idx >= 0:
+                        memories_state[idx] = pulse
+                if target.startswith("Q"):
+                    try:
+                        idx = int(target[1:]) - 1
+                    except ValueError:
+                        continue
+                    if 0 <= idx < outputs_count:
+                        outputs[idx] = pulse
+                acc = pulse
+                continue
+            if op == "=" and len(parts) >= 2:
+                target = parts[1].upper()
+            elif op.startswith("="):
+                target = op[1:].upper()
+            else:
+                if op in {"S", "R"} and len(parts) >= 2:
+                    target = parts[1].upper()
+                elif op == "T" and len(parts) >= 2:
+                    target = parts[1].upper()
+                    if target.startswith("Q"):
+                        try:
+                            idx = int(target[1:]) - 1
+                        except ValueError:
+                            continue
+                        if 0 <= idx < outputs_count:
+                            outputs[idx] = bool(acc)
+                    if target.startswith("M"):
+                        try:
+                            idx = int(target[1:]) - 1
+                        except ValueError:
+                            continue
+                        if idx >= 0:
+                            memories_state[idx] = bool(acc)
+                    acc = None
+                    continue
+                else:
+                    continue
+            if target.startswith("Q"):
+                try:
+                    idx = int(target[1:]) - 1
+                except ValueError:
+                    continue
+                if 0 <= idx < outputs_count:
+                    if op == "R":
+                        outputs[idx] = False
+                    elif op == "S":
+                        outputs[idx] = True
+                    else:
+                        outputs[idx] = bool(acc)
+            if target.startswith("M"):
+                try:
+                    idx = int(target[1:]) - 1
+                except ValueError:
+                    continue
+                if idx >= 0:
+                    if op == "R":
+                        memories_state[idx] = False
+                    elif op == "S":
+                        memories_state[idx] = True
+                    else:
+                        memories_state[idx] = bool(acc)
+            if target.startswith("C") and op in {"R", "S"}:
+                try:
+                    idx = int(target[1:]) - 1
+                except ValueError:
+                    continue
+                if idx >= 0:
+                    key = f"C{idx + 1}"
+                    c_state = counters_state.get(key, {})
+                    pv = int(c_state.get("pv", 1))
+                    if op == "R":
+                        counters_state[key] = {"cv": 0, "pv": pv, "cu": False, "q": False}
+                        counters_output[idx] = False
+                    else:
+                        counters_state[key] = {"cv": pv, "pv": pv, "cu": False, "q": True}
+                        counters_output[idx] = True
+            acc = None
+        states[comp["id"]] = outputs
+        meta[comp["id"]] = {
+            "timers": timers_state,
+            "mem": memories_state,
+            "counters": counters_state,
+            "trig": trig_state,
+        }
+    return states, meta
+
+
 def compute_timer_states(components, terminal_nodes, dc_voltages, ac_voltages, sim_time_ms):
     states = {}
     now = int(sim_time_ms) if sim_time_ms is not None else int(time.time() * 1000)
@@ -1021,6 +1402,12 @@ def solve_network(payload):
         if comp.get("type") == "timer":
             timer_states[comp["id"]] = comp.get("props", {}).get("timerState", {}) or {}
     timer_states.update(compute_time_timer_states(components))
+    plc_states = {}
+    plc_meta = {}
+    for comp in components:
+        if comp.get("type") == "plc":
+            outputs = max(1, min(64, int(comp.get("props", {}).get("outputs", 4))))
+            plc_states[comp["id"]] = [False] * outputs
     dc_solution = None
     dc_model = None
     ac_solution = None
@@ -1033,7 +1420,7 @@ def solve_network(payload):
     debug_info = {"dc": {}, "ac": {}}
 
     for _ in range(3):
-        dc_model = build_model_dc(components, wires, contactor_states, timer_states)
+        dc_model = build_model_dc(components, wires, contactor_states, timer_states, plc_states)
         if "error" in dc_model:
             return dc_model
         dc_elements = dc_model["resistors"] + dc_model["sources"]
@@ -1083,7 +1470,7 @@ def solve_network(payload):
             dc_solution = {"node_voltages": [0.0] * dc_model["node_count"], "source_currents": {}}
 
         if freq is not None:
-            ac_model = build_model_ac(components, wires, contactor_states, timer_states, freq)
+            ac_model = build_model_ac(components, wires, contactor_states, timer_states, plc_states, freq)
             if "error" in ac_model:
                 return ac_model
             ac_elements = ac_model["impedances"] + ac_model["sources"]
@@ -1149,16 +1536,31 @@ def solve_network(payload):
             sim_time,
         )
         updated_timers.update(compute_time_timer_states(components))
-        if updated == contactor_states and updated_timers == timer_states:
+        updated_plc, updated_plc_meta = compute_plc_states(
+            components,
+            terminal_nodes,
+            dc_solution["node_voltages"] if dc_solution else None,
+            ac_solution["node_voltages"] if ac_solution else None,
+            sim_time,
+        )
+        if (
+            updated == contactor_states
+            and updated_timers == timer_states
+            and updated_plc == plc_states
+        ):
             break
         contactor_states = updated
         timer_states = updated_timers
+        plc_states = updated_plc
+        plc_meta = updated_plc_meta
 
     return {
         "components": components,
         "terminal_nodes": dc_model["terminal_nodes"],
         "contactor_states": contactor_states,
         "timer_states": timer_states,
+        "plc_states": plc_states,
+        "plc_meta": plc_meta,
         "dc_solution": dc_solution,
         "ac_solution": ac_solution,
         "solve_errors": solve_errors,
@@ -1216,6 +1618,8 @@ def simulate_circuit(payload):
         "faults": faults,
         "solveErrors": result["solve_errors"],
         "timerStates": result.get("timer_states", {}),
+        "plcStates": result.get("plc_states", {}),
+        "plcMeta": result.get("plc_meta", {}),
         "debugInfo": result.get("debug_info", {}),
     }
 
@@ -1458,6 +1862,7 @@ def api_measure():
             payload.get("wires", []),
             result["contactor_states"],
             result.get("timer_states", {}),
+            result.get("plc_states", {}),
         )
         if "error" in model:
             return jsonify({"error": model["error"]}), 400
