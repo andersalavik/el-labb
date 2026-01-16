@@ -14,6 +14,7 @@ Ett webbaserat verktyg för att rita och simulera AC/DC‑scheman med symbolbibl
 - Knäckpunkter på kablar (lägg till/drag/ta bort).
 - Manuell resize av canvas (sparas i labb).
 - Debug‑logg för simuleringar.
+- PLC‑komponent med LAD‑text och live PLC‑debug.
 
 ## Krav
 
@@ -65,6 +66,11 @@ Tips: I simläge uppdateras timers och visar återstående tid eller PÅ/AV som 
 ## PLC‑programmering (LAD‑text)
 
 PLC‑komponenten kan programmeras med enkel LAD‑text som liknar Siemens‑stil.
+
+### Adressering och kommentarer
+
+- Adresser är 1‑baserade: `I1..I64`, `Q1..Q64`, `M1..`, `T1..`, `C1..`.
+- Kommentarer kan skrivas med `;` (allt efter `;` ignoreras).
 
 ### Grundinstruktioner
 
@@ -136,6 +142,11 @@ Exempel med MOVE:
 MOVE I1 Q1
 ```
 
+### PLC‑debug
+
+- Använd knappen **PLC‑debug** i egenskapspanelen för att se hur PLC:n “tänker”.
+- Debuggen visar varje rad, ACC‑värde och en sammanfattning av in/ut efter varje scan.
+
 ## Multimeter
 
 - **DC**: Volt, Ampere, Ohm
@@ -159,6 +170,6 @@ Placera multimetern genom att välja läge och klicka på komponent eller termin
 
 ## Notiser
 
-- Projektet är i ett väldigt tidigt stadie och är vibe‑kodat.
+- Projektet är i ett tidigt skede och mycket är vibe‑kodat.
 - Simuleringen är avsedd för utbildning och visualisering, inte för verkliga elsystem.
 - AC‑simulering stöder en frekvens åt gången.
