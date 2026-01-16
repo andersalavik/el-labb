@@ -51,8 +51,9 @@
         </section>
 
         <section class="panel">
-          <h2 data-i18n="panel.meter">Multimeter</h2>
-          <div class="meter-settings">
+          <details class="panel-collapsible" open>
+            <summary data-i18n="panel.meter">Multimeter</summary>
+            <div class="meter-settings">
             <label><input type="radio" name="meterMode" value="voltage" checked /> <span data-i18n="meter.dc_voltage">DC Volt (V)</span></label>
             <label><input type="radio" name="meterMode" value="current" /> <span data-i18n="meter.dc_current">DC Ampere (A)</span></label>
             <label><input type="radio" name="meterMode" value="resistance" /> <span data-i18n="meter.resistance">Ohm (Ω)</span></label>
@@ -63,8 +64,9 @@
             <label><input type="radio" name="meterMode" value="ac_power_q" /> <span data-i18n="meter.ac_power_q">Effekt Q (var)</span></label>
             <label><input type="radio" name="meterMode" value="ac_power_s" /> <span data-i18n="meter.ac_power_s">Effekt S (VA)</span></label>
             <label><input type="radio" name="meterMode" value="ac_pf" /> <span data-i18n="meter.ac_pf">cos φ</span></label>
-          </div>
-          <div class="meter-readout" id="meterReadout">-</div>
+            </div>
+            <div class="meter-readout" id="meterReadout">-</div>
+          </details>
         </section>
 
         <section class="panel">
